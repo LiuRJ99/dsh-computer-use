@@ -13,6 +13,7 @@ import { createInterface } from 'node:readline'
 import { Context } from '@deepseek-ai/cordis'
 import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
 import { LocalComputerEngine } from '../computer-local/index.ts'
+import { defaultHelperPath } from '../setup/paths.ts'
 import { formatAppStateEnvelope, listAppsText } from '../computer/index.ts'
 import type { ComputerEngine } from '../computer/index.ts'
 import type {
@@ -43,7 +44,7 @@ export const MCP_SERVER_VERSION = '0.1.0'
 
 /** Boot options for the MCP server. */
 export interface McpServerOptions {
-  /** Absolute path to the daemon executable inside its bundled .app; env `DSH_COMPUTER_HELPER_PATH` when absent. */
+  /** Absolute path to the daemon executable inside its bundled .app; env `DSH_COMPUTER_HELPER_PATH`, then the setup CLI install path, when absent. */
   helperPath?: string
 }
 
@@ -456,10 +457,7 @@ export class McpError extends Error {
 
 /** Boot the engine and return a serving MCP server. */
 export async function createServer(options: McpServerOptions = {}): Promise<McpServer> {
-  const helperPath = options.helperPath ?? process.env.DSH_COMPUTER_HELPER_PATH
-  if (helperPath === undefined || helperPath.length === 0) {
-    throw new Error('dsh-computer-mcp: no daemon path — pass it as the first argument or set DSH_COMPUTER_HELPER_PATH')
-  }
+  const helperPath = options.helperPath ?? process.env.DSH_COMPUTER_HELPER_PATH ?? defaultHelperPath()
   const ctx = new Context()
   await ctx.plugin(LocalSubprocessRuntime)
   await ctx.plugin(LocalComputerEngine, { helperPath })

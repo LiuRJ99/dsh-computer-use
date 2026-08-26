@@ -47,7 +47,7 @@ then run steps 2–3 above (`npx @zibokapi/dsh-codex-computer-use`, restart the 
 git clone https://github.com/geohotstan/dsh-computer-use
 cd dsh-computer-use
 pnpm install
-pnpm exec dsh-codex-computer-use   # build + install the daemon, ask for permissions
+node lib/setup.js                       # build + install the daemon, ask for permissions
 pnpm run build:native              # optional: a Developer ID / self-signed build, see Permissions
 cd <where you run dsh>
 dsh plugin --profile <name> add ../dsh-computer-use

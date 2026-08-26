@@ -18,7 +18,7 @@ export declare const MCP_SERVER_NAME = "dsh-computer-mcp";
 export declare const MCP_SERVER_VERSION = "0.1.0";
 /** Boot options for the MCP server. */
 export interface McpServerOptions {
-    /** Absolute path to the daemon executable inside its bundled .app; env `DSH_COMPUTER_HELPER_PATH` when absent. */
+    /** Absolute path to the daemon executable inside its bundled .app; env `DSH_COMPUTER_HELPER_PATH`, then the setup CLI install path, when absent. */
     helperPath?: string;
 }
 /** One MCP tool definition: name, description, and JSON input schema. */

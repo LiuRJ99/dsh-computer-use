@@ -47,7 +47,7 @@ registry 上的 tarball 自带 `lib/`，且 `lib/` 已提交进 git，因此任�
 git clone https://github.com/geohotstan/dsh-computer-use
 cd dsh-computer-use
 pnpm install
-pnpm exec dsh-codex-computer-use   # 构建 + 安装守护进程并请求授权
+node lib/setup.js                       # 构建 + 安装守护进程并请求授权
 pnpm run build:native              # 可选：Developer ID / 自签名构建，见「权限」
 cd <你运行 dsh 的目录>
 dsh plugin --profile <名字> add ../dsh-computer-use

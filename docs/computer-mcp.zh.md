@@ -24,7 +24,7 @@ No direct effect: state text and screenshots reach models only through the consu
 
 ## Known Limitations and Deferred Work
 
-- **仅限 macOS** — 引擎拒绝非 darwin 主机；守护进程面向 macOS 14+（arm64/x64）。
+- **仅限 macOS** — 引擎拒绝非 darwin 主机；守护进程面向 macOS 13+（arm64/x64）。macOS 14+ 才在私有 SkyLight 路径上提供键盘认证信封；较旧系统在需要时回退到公开事件路径。
 - **每服务器进程一个守护进程** — MCP 服务器生成自己的常驻守护进程；harness 与 MCP 客户端可以各自持有一个驱动同一桌面，但两个 agent 不得同时驱动同一个应用。
 - **无会话审批** — MCP 表面不携带按应用审批闸门；消费方客户端拥有自己的策略（DSH harness 的 `@zibokapi/dsh-codex-computer-use/computer-policy` 不适用于 MCP 调用方）。
 - **未复刻 `sky_click` 与锁屏使用** — 它们分别依赖私有 SkyLight API 与授权插件。

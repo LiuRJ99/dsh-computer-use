@@ -49,7 +49,7 @@ No direct effect: provider-owned capture text and screenshots reach the model on
 
 ## Known Limitations and Deferred Work
 
-- **macOS only** — the engine rejects non-darwin hosts at load; the daemon targets macOS 14+ (arm64/x64).
+- **macOS only** — the engine rejects non-darwin hosts at load; the daemon targets macOS 13+ (arm64/x64). macOS 14+ adds the keyboard authentication envelope on the private SkyLight path; older systems use the public-event fallback when needed.
 - **Native build requirement** — the daemon is built and bundled from `native/` sources; no prebuilt artifact is published. Package installation does not run `swift build` or the bundling step.
 - **TCC grant persistence** — macOS keys each grant on the bundle id, code signature, and on-disk path. Rebuilds with the default ad-hoc signature (or a moved checkout) reset the grants; sign with a stable identity (`DSH_COMPUTER_SIGN_IDENTITY`) and keep the checkout path fixed to avoid re-prompting.
 - **Background delivery is app-dependent** — apps that ignore directly-posted events need `foregroundApps`; background delivery now uses the private SkyLight path (with the public per-process fallback per symbol), which depends on private APIs that can change across macOS releases — a missing symbol degrades to the public path instead of failing.

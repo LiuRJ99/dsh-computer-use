@@ -49,7 +49,7 @@ No direct effect: provider-owned capture text and screenshots reach the model on
 
 ## Known Limitations and Deferred Work
 
-- **仅限 macOS** — 引擎在非 darwin 主机加载时拒绝；守护进程面向 macOS 14+（arm64/x64）。
+- **仅限 macOS** — 引擎在非 darwin 主机加载时拒绝；守护进程面向 macOS 13+（arm64/x64）。macOS 14+ 才在私有 SkyLight 路径上提供键盘认证信封；较旧系统在需要时回退到公开事件路径。
 - **需要本地构建** — 守护进程由 `native/` 源码构建并打包；不发布预构建产物，包安装不运行 `swift build` 与打包步骤。
 - **TCC 授权持久性** — macOS 以 bundle id、代码签名和磁盘路径为键记录每项授权。用默认的 ad-hoc 签名重建（或移动检出目录）会重置授权；请以稳定身份签名（`DSH_COMPUTER_SIGN_IDENTITY`）并保持检出路径固定，避免重复提示。
 - **后台投递因应用而异** — 忽略直接投递事件的应用需要 `foregroundApps`；后台投递现走私有 SkyLight 路径（按符号回退到公开的进程内投递），依赖的私有 API 可能随 macOS 版本变化——符号缺失时降级到公开路径而非失败。

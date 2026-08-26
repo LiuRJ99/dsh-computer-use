@@ -1,4 +1,4 @@
-// swift-tools-version: 5.10
+// swift-tools-version: 5.9
 // The resident macOS computer-use helper for @zibokapi/dsh-codex-computer-use/computer-local.
 // Build: swift build -c release --package-path native
 // then bundle+sign with scripts/bundle.sh (run `pnpm run build:native`). The
@@ -9,7 +9,7 @@ import PackageDescription
 
 let package = Package(
     name: "dsh-computer-daemon",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v13)],
     targets: [
         .executableTarget(
             name: "dsh-computer-daemon",

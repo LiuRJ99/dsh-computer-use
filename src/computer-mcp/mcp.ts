@@ -2,7 +2,7 @@
 /**
  * The `dsh-computer-mcp` binary: boot the computer-use engine and serve the
  * Codex Computer Use MCP surface over stdio. The daemon path comes from the
- * first argument or `DSH_COMPUTER_HELPER_PATH`.
+ * first argument, `DSH_COMPUTER_HELPER_PATH`, or the setup CLI's stable DSH-home install path.
  */
 import { createServer } from './index.ts'
 

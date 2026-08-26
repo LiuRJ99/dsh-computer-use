@@ -24,7 +24,7 @@ No direct effect: state text and screenshots reach models only through the consu
 
 ## Known Limitations and Deferred Work
 
-- **macOS only** — the engine rejects non-darwin hosts; the daemon targets macOS 14+ (arm64/x64).
+- **macOS only** — the engine rejects non-darwin hosts; the daemon targets macOS 13+ (arm64/x64). macOS 14+ adds the keyboard authentication envelope on the private SkyLight path; older systems use the public-event fallback when needed.
 - **One daemon per server process** — the MCP server spawns its own resident daemon; a harness and an MCP client can each hold one against the same desktop, but two agents must not drive the same app simultaneously.
 - **No session approvals** — the MCP surface carries no per-app approval gate; the consuming client owns its own policy (the DSH harness's `@zibokapi/dsh-codex-computer-use/computer-policy` does not apply to MCP callers).
 - **`sky_click` and locked use are not replicated** — they depend on private SkyLight APIs and an authorization plug-in respectively.
