@@ -11,7 +11,6 @@
  */
 
 import { Context, Service } from '@deepseek-ai/cordis'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
 import type {
   ClickRequest,
   ComputerApp,
@@ -38,7 +37,7 @@ import type {
  * duplicate service registration), and a settings document carried between
  * machines keeps resolving under the one name.
  */
-export const COMPUTER_SETTINGS_NAMESPACE = settingsNamespace('computer')
+export const COMPUTER_SETTINGS_NAMESPACE = 'computer' as const
 
 export type {
   ClickRequest,

@@ -7,6 +7,7 @@ allowBuilds:
   esbuild: true
   node-pty: true
   '@deepseek-ai/dsh-subprocess-local': true
+  koffi: true
 
 # Every harness dependency is a first-party @deepseek-ai package pinned to one
 # release train (0.1.0-rc.x). The cooldown exists to slow adoption of freshly

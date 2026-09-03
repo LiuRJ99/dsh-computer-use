@@ -17,7 +17,7 @@ import z from '@deepseek-ai/schemastery';
 export declare const name = "computer-policy";
 export declare const inject: string[];
 /** Settings namespace owning the persisted per-app control grants. */
-export declare const COMPUTER_POLICY_NAMESPACE: import("@deepseek-ai/dsh-settings").SettingsNamespace;
+export declare const COMPUTER_POLICY_NAMESPACE: "computer-policy";
 /** Configuration for the computer-use approval policy. */
 export interface Config {
     /**

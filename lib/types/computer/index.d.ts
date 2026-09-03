@@ -18,7 +18,7 @@ import type { ClickRequest, ComputerApp, ComputerAppState, ComputerExecSpec, Com
  * duplicate service registration), and a settings document carried between
  * machines keeps resolving under the one name.
  */
-export declare const COMPUTER_SETTINGS_NAMESPACE: import("@deepseek-ai/dsh-settings").SettingsNamespace;
+export declare const COMPUTER_SETTINGS_NAMESPACE: "computer";
 export type { ClickRequest, ComputerApp, ComputerAppOrder, ComputerAppState, ComputerClickMethod, ComputerDirection, ComputerExecSpec, ComputerMouseButton, ComputerPermissionStatus, ComputerRecordStatus, ComputerRequestBase, ComputerScreenshot, ComputerSelectTextSelectionType, DragRequest, GetAppStateRequest, ListAppsRequest, PerformSecondaryActionRequest, PressKeyRequest, ScrollRequest, SelectTextRequest, SetValueRequest, TypeTextRequest, } from './types.ts';
 export { TREE_TRUNCATED_MARK, assertActionRequest, assertClickAddressing, formatAppStateEnvelope, listAppsText, normalizeDirection, normalizeMouseButton, truncateTreeChars, truncateTreeText, } from './render.ts';
 export type { ActionRequest, NormalizedDirection, NormalizedMouseButton } from './render.ts';

@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import { CallId } from '@deepseek-ai/dsh-llm'
+import { ToolCallId } from '@deepseek-ai/dsh-llm'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
 import { ComputerEngine } from '../../src/computer/index.ts'
@@ -124,7 +124,7 @@ let callCounter = 0
 function call(ctx: Context, name: string, args: unknown, agent?: object) {
   return ctx.tools.execute({
     signal: new AbortController().signal,
-    callId: CallId(`call-${++callCounter}`),
+    callId: ToolCallId(`call-${++callCounter}`),
     name,
     arguments: args,
     ...agent ? { agent: agent as never } : {},
@@ -422,7 +422,7 @@ describe('computer_use input tools', () => {
     const { ctx } = await setup()
     const result = await ctx.tools.execute({
       signal: new AbortController().signal,
-      callId: CallId('nested-capture'),
+      callId: ToolCallId('nested-capture'),
       name: 'computer_use_get_app_state',
       arguments: { app: 'TextEdit' },
       parent: 'enclosing-run-code-token' as never,
@@ -537,7 +537,7 @@ describe('computer_use input tools', () => {
     const controller = new AbortController()
     const pending = ctx.tools.execute({
       signal: controller.signal,
-      callId: CallId('aborted-call'),
+      callId: ToolCallId('aborted-call'),
       name: 'computer_use_click',
       arguments: { app: 'a', element_index: 0 },
     })

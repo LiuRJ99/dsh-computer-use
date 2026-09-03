@@ -16,7 +16,6 @@
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
 import type { SettingsScope } from '@deepseek-ai/dsh-settings'
 import type { PreToolDecision, ToolExecution, ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-system-prompt'
@@ -25,7 +24,7 @@ export const name = 'computer-policy'
 export const inject = ['systemPrompt', 'tools']
 
 /** Settings namespace owning the persisted per-app control grants. */
-export const COMPUTER_POLICY_NAMESPACE = settingsNamespace('computer-policy')
+export const COMPUTER_POLICY_NAMESPACE = 'computer-policy' as const
 
 /** The input tools whose first use per app asks for approval. */
 const INPUT_TOOL_NAMES = [

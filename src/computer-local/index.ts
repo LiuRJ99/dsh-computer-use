@@ -39,7 +39,6 @@ import type {
   SetValueRequest,
   TypeTextRequest,
 } from '../computer/index.ts'
-import { installSettingsSection } from '@deepseek-ai/dsh-settings'
 import type { SubprocessHandle, SubprocessOutputReader } from '@deepseek-ai/dsh-subprocess'
 import { clampTimeout, deadline, MAX_TIMER_DELAY_MS, timeoutOf } from '@deepseek-ai/dsh-timeout'
 import { DAEMON_METHODS, LineDecoder, buildRequest, parseResponse } from './protocol.ts'
@@ -496,14 +495,20 @@ export class LocalComputerEngine extends ComputerEngine {
     const entry = config as ResolvedConfig
     assertServiceableComputerConfig(entry)
     this.source = () => entry
-    installSettingsSection(ctx, COMPUTER_SETTINGS_NAMESPACE, LocalComputerEngine.Config, entry, {
-      validate: assertServiceableComputerConfig,
-      setSource: (current) => {
-        this.source = current as () => ResolvedConfig
-      },
-      // Every field is read through the getter at each request, so nothing
-      // derived from the source needs rebuilding when the document changes.
-      onChange: () => {},
+    // Keep the settings integration optional: the engine still runs from its
+    // composition entry when no settings provider is mounted. The injection
+    // fiber also gives installSection a lifecycle tied to the provider, so a
+    // provider detach correctly restores the composition source.
+    ctx.inject(['settings'], (scope) => {
+      scope.settings.installSection(ctx, COMPUTER_SETTINGS_NAMESPACE, LocalComputerEngine.Config, entry, {
+        validate: assertServiceableComputerConfig,
+        setSource: (current) => {
+          this.source = current as () => ResolvedConfig
+        },
+        // Every field is read through the getter at each request, so nothing
+        // derived from the source needs rebuilding when the document changes.
+        onChange: () => {},
+      })
     })
     // Fail loud at load when no composition value, no environment value, and
     // no setup-CLI install name a daemon; a settings-document value present at
