@@ -359,22 +359,23 @@ interface SkillsSurface {
     content: string
     source: string
     invocation?: { modelInvocable: boolean; userInvocable: boolean }
+    metadata?: Readonly<Record<string, unknown>>
     provider?: string
   }): () => void
 }
 
 /**
- * The shipped `computer-use` skill, mirroring the Codex computer-use skill:
- * workflow, operating rules, and troubleshooting for the ten tools. The text
- * pairs with the plugin's `skills/computer-use/SKILL.md` (the human-readable
- * copy of the same content).
+ * The shipped `computer-use` authorization skill, mirroring the browser
+ * plugin's registration contract: only an explicit user `/computer-use`
+ * invocation can surface it, and the lazy-gate association is published on
+ * the skill itself. Its body contains the workflow, operating rules, and
+ * troubleshooting for the computer_use_* tools and pairs with the plugin's
+ * `skills/computer-use/SKILL.md` copy.
  */
 const COMPUTER_USE_SKILL = {
   name: 'computer-use',
-  description: 'Operate real macOS apps in the background through the computer_use_* tools — '
-    + 'list apps, capture window accessibility trees, and act with clicks, typing, keys, scrolling, and AX actions. '
-    + 'Use when a task requires driving a desktop app or browser the way a user would.',
-  whenToUse: 'Use when the task depends on a graphical user interface — operating a desktop app or browser, '
+  description: 'Unlock the computer_use_* tools for this session after you explicitly invoke /computer-use.',
+  whenToUse: 'Invoke /computer-use only when the task requires operating a desktop app or browser, '
     + 'reproducing a GUI-only bug, or verifying a UI flow — rather than files or command output.',
   content: `# Computer Use
 
@@ -445,6 +446,16 @@ This policy governs Computer Use actions only: clicks, typing, scrolling, draggi
 - \`Accessibility permission is required\` — grant it via \`computer_use_request_access\` and System Settings > Privacy & Security > Accessibility.
 `,
   source: '@zibokapi/dsh-codex-computer-use/computer-tools',
+  invocation: {
+    modelInvocable: false,
+    userInvocable: true,
+  },
+  metadata: {
+    'dsh:gate': {
+      toolPrefixes: ['computer_use_'],
+      promptSections: ['tool:computer', 'tool:computer-policy'],
+    },
+  },
 } as const
 
 export function apply(ctx: Context, config: Config = {}): void {
@@ -462,7 +473,9 @@ export function apply(ctx: Context, config: Config = {}): void {
       + 'full tree or long semantic text.',
   })
 
-  // Ship the Codex-style computer-use skill when a skill registry is mounted.
+  // Ship the user-only computer-use authorization skill when a skill registry
+  // is mounted. dsh-tool-lazy-gate consumes its invocation policy and
+  // dsh:gate association to unlock the host-registered tools per session.
   const skills = ctx.get('skills') as SkillsSurface | undefined
   if (skills !== undefined) {
     ctx.effect(() => skills.register(COMPUTER_USE_SKILL), 'computer-use skill')

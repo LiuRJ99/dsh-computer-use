@@ -13,6 +13,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { ToolCallId } from '@deepseek-ai/dsh-llm'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
+import SkillRegistry from '@deepseek-ai/dsh-skill'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
 import { ComputerEngine } from '../../src/computer/index.ts'
 import type {
@@ -155,6 +156,30 @@ describe('computer_use tools registration', () => {
     await fiber.dispose()
     expect(ctx.tools.schemas()).toHaveLength(0)
     for (const name of names) expect(ctx.tools.get(name), name).toBeUndefined()
+  })
+
+  it('registers computer-use as a user-only lazy-gate skill', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SystemPrompt)
+    await ctx.plugin(ToolRuntime)
+    await ctx.plugin(SkillRegistry)
+    await ctx.plugin(MockEngine)
+    const fiber = await ctx.plugin(ToolComputer)
+
+    const skill = await ctx.skills.get('computer-use')
+    expect(skill).toMatchObject({
+      name: 'computer-use',
+      invocation: { modelInvocable: false, userInvocable: true },
+      metadata: {
+        'dsh:gate': {
+          toolPrefixes: ['computer_use_'],
+          promptSections: ['tool:computer', 'tool:computer-policy'],
+        },
+      },
+    })
+
+    await fiber.dispose()
+    expect(await ctx.skills.get('computer-use')).toBeUndefined()
   })
 
   it('adds the cross-call capture guidance to the system prompt', async () => {
