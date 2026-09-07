@@ -6,9 +6,15 @@ on:
     - cron: '0 2 * * *'
   workflow_dispatch:
 
+# The sync branch is bot-owned, but fork main and all other refs remain protected
+# by the normal repository rules. No upstream credentials are needed.
 permissions:
   contents: write
   pull-requests: write
+
+env:
+  UPSTREAM_URL: https://github.com/geohotstan/dsh-computer-use.git
+  SYNC_BRANCH: sync/upstream-main
 
 jobs:
   sync:
@@ -17,55 +23,121 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          # Always start from the fork's default branch, not the event ref.
+          ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
 
       - name: Fetch upstream
         run: |
-          git remote add upstream https://github.com/zibokapi/dsh-codex-computer-use.git || true
-          git fetch upstream main
+          set -euo pipefail
+          TARGET_BRANCH="${{ github.event.repository.default_branch }}"
+          TARGET_BRANCH="${TARGET_BRANCH:-main}"
+
+          if git remote get-url upstream >/dev/null 2>&1; then
+            git remote set-url upstream "$UPSTREAM_URL"
+          else
+            git remote add upstream "$UPSTREAM_URL"
+          fi
+          test "$(git remote get-url upstream)" = "$UPSTREAM_URL"
+          git fetch --no-tags upstream main
+          git fetch --no-tags origin "$TARGET_BRANCH"
 
       - name: Check for new upstream commits
         id: check
         run: |
+          set -euo pipefail
           TARGET_BRANCH="${{ github.event.repository.default_branch }}"
-          if [ -z "$TARGET_BRANCH" ]; then
-            TARGET_BRANCH="main"
+          TARGET_BRANCH="${TARGET_BRANCH:-main}"
+          FORK_REF="origin/$TARGET_BRANCH"
+
+          if ! git show-ref --verify --quiet "refs/remotes/$FORK_REF"; then
+            echo "::error::Fork target branch $FORK_REF was not fetched. Refusing to sync."
+            exit 1
           fi
+
           echo "Target branch: $TARGET_BRANCH"
+          echo "Fork target: $FORK_REF ($(git rev-parse "$FORK_REF"))"
+          echo "Upstream: $UPSTREAM_URL ($(git rev-parse upstream/main))"
 
-          BEHIND_COUNT=$(git rev-list --count HEAD..upstream/main)
+          BEHIND_COUNT=$(git rev-list --count "$FORK_REF..upstream/main")
           echo "Behind count: $BEHIND_COUNT"
-          echo "behind_count=$BEHIND_COUNT" >> $GITHUB_OUTPUT
+          echo "target_branch=$TARGET_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "behind_count=$BEHIND_COUNT" >> "$GITHUB_OUTPUT"
 
-          if [ "$BEHIND_COUNT" -gt 0 ]; then
-            COMMITS=$(git log HEAD..upstream/main --oneline -n 25)
-            echo "COMMITS<<EOF" >> $GITHUB_ENV
-            echo "$COMMITS" >> $GITHUB_ENV
-            echo "EOF" >> $GITHUB_ENV
+      - name: Merge upstream into fork-based sync branch
+        if: steps.check.outputs.behind_count > 0
+        env:
+          TARGET_BRANCH: ${{ steps.check.outputs.target_branch }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Recreate the local branch from the fork target. This makes every
+          # sync candidate contain fork main before upstream is merged.
+          git fetch --no-tags origin "$TARGET_BRANCH"
+          git checkout -B "$SYNC_BRANCH" "origin/$TARGET_BRANCH"
+          FORK_TARGET_SHA=$(git rev-parse "origin/$TARGET_BRANCH")
+          echo "Sync branch starts at fork $TARGET_BRANCH: $FORK_TARGET_SHA"
+
+          # Never use a theirs/ours strategy: a conflict must stop this run so
+          # fork-specific commits cannot be silently replaced.
+          if ! git merge --no-edit --no-ff upstream/main; then
+            echo "::error::Could not cleanly merge upstream/main into $SYNC_BRANCH."
+            echo "Conflicting paths (if any):"
+            CONFLICT_PATHS=$(git diff --name-only --diff-filter=U || true)
+            if [ -n "$CONFLICT_PATHS" ]; then
+              printf '%s\n' "$CONFLICT_PATHS" | sed 's/^/  - /'
+            else
+              echo "  (git reported a merge failure without unmerged paths)"
+              git status --short
+            fi
+            echo "No push or PR will be attempted; fork $TARGET_BRANCH was not changed."
+            git merge --abort || true
+            exit 1
+          fi
+
+          # The fork target must remain an ancestor of the candidate after the
+          # clean merge; this is an explicit guard against dropping custom work.
+          if ! git merge-base --is-ancestor "origin/$TARGET_BRANCH" HEAD; then
+            echo "::error::Sync candidate no longer contains fork $TARGET_BRANCH."
+            exit 1
+          fi
+          echo "Clean merge retained fork target $TARGET_BRANCH and merged upstream/main."
+
+      - name: Push clean sync branch
+        if: steps.check.outputs.behind_count > 0
+        run: |
+          set -euo pipefail
+
+          # Updating an existing bot-owned sync branch may rewrite its previous
+          # merge result. Lease the current remote SHA so an unexpected human
+          # edit is rejected instead of overwritten. A remote lookup failure
+          # aborts under pipefail; only an absent branch takes the create path.
+          REMOTE_SYNC_SHA=$(git ls-remote --heads origin "$SYNC_BRANCH" | awk 'NR == 1 { print $1 }')
+          if [ -n "$REMOTE_SYNC_SHA" ]; then
+            git push \
+              "--force-with-lease=refs/heads/$SYNC_BRANCH:$REMOTE_SYNC_SHA" \
+              origin "HEAD:refs/heads/$SYNC_BRANCH"
+          else
+            git push origin "HEAD:refs/heads/$SYNC_BRANCH"
           fi
 
       - name: Create or update sync branch and PR
         if: steps.check.outputs.behind_count > 0
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_BRANCH: ${{ steps.check.outputs.target_branch }}
         run: |
-          TARGET_BRANCH="${{ github.event.repository.default_branch }}"
-          if [ -z "$TARGET_BRANCH" ]; then
-            TARGET_BRANCH="main"
-          fi
-          SYNC_BRANCH="sync/upstream-main"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git checkout -B "$SYNC_BRANCH" upstream/main
-          git push origin "$SYNC_BRANCH" --force
-
-          PR_TITLE="chore(sync): sync upstream zibokapi/dsh-codex-computer-use (main)"
+          set -euo pipefail
+          COMMITS=$(git log "origin/$TARGET_BRANCH..upstream/main" --oneline -n 25)
+          PR_TITLE="chore(sync): sync upstream geohotstan/dsh-computer-use (main)"
           PR_BODY=$(cat <<EOF
           ## Upstream Sync Report
 
-          Detected **${{ steps.check.outputs.behind_count }}** new commit(s) from upstream \`zibokapi/dsh-codex-computer-use:main\`.
+          Detected **${{ steps.check.outputs.behind_count }}** new commit(s) from upstream \`geohotstan/dsh-computer-use:main\`.
+
+          The candidate branch starts from fork \`origin/$TARGET_BRANCH\` and merges \`upstream/main\`. It is pushed only after a clean merge; merge conflicts fail the workflow without changing fork main.
 
           ### New Commits Preview:
           \`\`\`text
@@ -77,7 +149,7 @@ jobs:
           EOF
           )
 
-          EXISTING_PR=$(gh pr list --head "$SYNC_BRANCH" --base "$TARGET_BRANCH" --json number --jq '.[0].number')
+          EXISTING_PR=$(gh pr list --head "$SYNC_BRANCH" --base "$TARGET_BRANCH" --state open --json number --jq '.[0].number')
           if [ -n "$EXISTING_PR" ]; then
             echo "PR #$EXISTING_PR already exists. Updating..."
             gh pr edit "$EXISTING_PR" --title "$PR_TITLE" --body "$PR_BODY"
