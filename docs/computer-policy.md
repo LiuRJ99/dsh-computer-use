@@ -11,6 +11,7 @@ Approval policy for the computer-use tools, mirroring the Codex Computer Use con
 - **Destructive secondary actions** — `computer_use_perform_secondary_action` labels matching `destructiveLabels` (case-insensitive whole-word prefixes; defaults cover delete, remove, erase, clear, trash, reset, format, uninstall, quit, sign out) ask on every call, even for approved apps.
 - **Send approval** — on apps listed in `sendApprovalApps`, a Return/Enter chord or a newline in typed text asks the user first, showing the app's latest captured text as the composed message. The decision confirms the single send and never grants.
 - **Allowlist** — `allowlistApps` forms the settings section's composition base, so listed apps never ask and a user grant layers above the base.
+- **Preflight before approval** — computer-use input arguments are validated before this policy asks for an app grant. A malformed call therefore fails without prompting; after an approved call reaches dispatch, the selected grant is committed before the tool body runs, so a valid action failure does not revoke it.
 
 ## Config
 

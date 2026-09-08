@@ -36,11 +36,15 @@ class MockEngine extends ComputerEngine {
     return { request, timeoutMs: request.timeoutMs ?? 1_000, ...request.signal ? { signal: request.signal } : {} }
   }
 
+  clickFailure: Error | undefined
+
   async listApps(_spec: ComputerExecSpec<ListAppsRequest>): Promise<ComputerApp[]> { return [] }
   async getAppState(_spec: ComputerExecSpec<GetAppStateRequest>): Promise<ComputerAppState> {
     return { app: 'com.apple.TextEdit', text: '0 window', truncated: false, screenshot: null }
   }
-  async click(_spec: ComputerExecSpec<ClickRequest>): Promise<void> {}
+  async click(_spec: ComputerExecSpec<ClickRequest>): Promise<void> {
+    if (this.clickFailure !== undefined) throw this.clickFailure
+  }
   async typeText(_spec: ComputerExecSpec<ClickRequest>): Promise<void> {}
   async pressKey(_spec: ComputerExecSpec<ClickRequest>): Promise<string> { return '' }
   async scroll(_spec: ComputerExecSpec<ClickRequest>): Promise<void> {}
@@ -163,6 +167,45 @@ describe('computer-policy', () => {
     const emptyApp = await call(ctx, 'computer_use_click', { app: '  ' })
     expect(emptyApp.isError).toBe(true)
     expect(approval.calls).toEqual([])
+    await ctx.fiber.dispose()
+  })
+
+  it('validates input before asking for app approval', async () => {
+    const approval = new SpyApproval()
+    const ctx = await setup({ approval })
+
+    const invalid = await call(ctx, 'computer_use_click', { app: 'TextEdit' })
+    expect(invalid.isError).toBe(true)
+    expect(invalid.error?.message ?? '').toContain('exactly one addressing mode')
+    expect(approval.calls).toEqual([])
+
+    const firstValid = await call(ctx, 'computer_use_click', { app: 'TextEdit', element_index: 0 })
+    expect(firstValid.isError).toBe(false)
+    expect(approval.calls).toHaveLength(1)
+
+    const secondValid = await call(ctx, 'computer_use_click', { app: 'TextEdit', element_index: 0 })
+    expect(secondValid.isError).toBe(false)
+    expect(approval.calls).toHaveLength(1)
+    await ctx.fiber.dispose()
+  })
+
+  it('keeps an explicit app grant when an approved action fails', async () => {
+    const questions = new SpyQuestions()
+    questions.choice = 'persistent'
+    const ctx = await setup({ questions })
+    const engine = ctx.computer as MockEngine
+    engine.clickFailure = new Error('synthetic click failure')
+
+    const failed = await call(ctx, 'computer_use_click', { app: 'TextEdit', element_index: 0 })
+    expect(failed.isError).toBe(true)
+
+    engine.clickFailure = undefined
+    const retried = await call(ctx, 'computer_use_click', { app: 'TextEdit', element_index: 0 })
+    expect(retried.isError).toBe(false)
+    expect(questions.calls).toHaveLength(1)
+
+    const listed = await call(ctx, 'computer_use_list_granted_applications', {})
+    expect(listed.value).toEqual({ applications: ['TextEdit'] })
     await ctx.fiber.dispose()
   })
 

@@ -17,7 +17,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { SettingsScope } from '@deepseek-ai/dsh-settings'
-import type { PreToolDecision, ToolExecution, ToolExecutionResult } from '@deepseek-ai/dsh-tools'
+import type { PreToolDecision, ToolDispatchExecution, ToolExecution, ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 
 export const name = 'computer-policy'
@@ -289,18 +289,18 @@ export function apply(ctx: Context, config: Config = {}): void {
       || sessionApproved.has(app)
 
   /** Persist one grant: the settings user layer, or session memory. */
-  const grant = (app: string): void => {
+  const grant = async (app: string): Promise<void> => {
     if (scope !== undefined) {
       const current = scope.get().approvedApps
       /* v8 ignore next -- only a concurrent double-grant race can find the app already present; the
          guard keeps the stored section idempotent. */
-      if (!current.includes(app)) void scope.update({ approvedApps: [...current, app] })
+      if (!current.includes(app)) await scope.update({ approvedApps: [...current, app] })
     } else {
       memoryApproved.add(app)
     }
   }
 
-  /** CallId→grant bookkeeping for asks that settle successfully; the scope decides where the grant lands. */
+  /** CallId→grant bookkeeping for asks that pass approval and reach dispatch; the scope decides where the grant lands. */
   const pendingGrants = new Map<string, { app: string; scope: GrantScope }>()
 
   /** The currently approved apps: the settings layer, or session memory (the persistent layer only). */
@@ -380,16 +380,26 @@ export function apply(ctx: Context, config: Config = {}): void {
     })
   })
 
-  // A gated call that settles successfully was approved; land the grant in
-  // the scope the user chose — the settings user layer for persistent
-  // grants, session memory for once grants.
-  ctx.on('tools/result', (exec: Readonly<ToolExecution>, result: Readonly<ToolExecutionResult>): undefined => {
+  // Reaching tools/execute means the approval seam allowed this call. Commit
+  // the chosen grant before the tool body runs, so a valid but unsuccessful
+  // action does not turn an explicit app grant into a repeated prompt.
+  ctx.on('tools/execute', async (
+    exec: ToolDispatchExecution,
+    next: () => Promise<ToolExecutionResult>,
+  ): Promise<ToolExecutionResult> => {
     const pending = pendingGrants.get(exec.callId)
-    if (pending === undefined) return undefined
+    if (pending !== undefined) {
+      pendingGrants.delete(exec.callId)
+      if (pending.scope === 'persistent') await grant(pending.app)
+      else sessionApproved.add(pending.app)
+    }
+    return next()
+  }, { prepend: true })
+
+  // Calls denied or cancelled after the policy ask never reach tools/execute;
+  // discard their reservation without turning the denied call into a grant.
+  ctx.on('tools/result', (exec: Readonly<ToolExecution>, _result: Readonly<ToolExecutionResult>): undefined => {
     pendingGrants.delete(exec.callId)
-    if (result.isError) return undefined
-    if (pending.scope === 'persistent') grant(pending.app)
-    else sessionApproved.add(pending.app)
     return undefined
   })
 }

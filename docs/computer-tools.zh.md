@@ -16,7 +16,7 @@
 | `computer_use_set_value` / `computer_use_select_text` | 直接替换可编辑值；定位文本并选中或放置光标。 |
 | `computer_use_drag` / `computer_use_perform_secondary_action` | 坐标间拖拽；调用具名辅助功能动作。 |
 
-工具执行 schema 无法表达的跨字段规则：点击恰好一种寻址模式、次数与页数为正、app/text/key/action 输入非空（`set_value` 允许清空字段）。工具把调用方中止转换为注册表的 `tool call aborted` 错误。
+工具执行 schema 无法表达的跨字段规则：点击恰好一种寻址模式、次数与页数为正、app/text/key/action 输入非空（`set_value` 允许清空字段）。这些输入检查会在独立的 computer-policy 审批闸门之前执行，因此格式错误的调用不会触发授权询问。工具把调用方中止转换为注册表的 `tool call aborted` 错误。
 
 ## 截图流程
 
@@ -98,7 +98,7 @@ Append-only.
 
 #### What the model sees
 
-Validation and policy failures are normalized as `Error: <message>`. This package's stable messages are `computer_use: app must be a non-empty string`, `computer_use: click requires exactly one addressing mode: elementIndex, or both x and y`, `computer_use: click coordinates require both x and y`, `computer_use: click_count must be a positive integer, got <value>`, `computer_use: text must be a non-empty string`, `computer_use: key must be a non-empty string`, `computer_use: action must be a non-empty string`, and `tool call aborted`.
+Validation and policy failures are normalized as `Error: <message>`. This package's stable messages are `computer_use: app must be a non-empty string`, `computer_use: click requires exactly one addressing mode: element_index, or both x and y`, `computer_use: click coordinates require both x and y`, `computer_use: click_count must be a positive integer, got <value>`, `computer_use: text must be a non-empty string`, `computer_use: key must be a non-empty string`, `computer_use: action must be a non-empty string`, and `tool call aborted`.
 
 #### Token effect
 

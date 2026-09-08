@@ -16,8 +16,8 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { defineTool, TOOL_ABORTED } from '@deepseek-ai/dsh-tools'
-import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
+import { defineTool, TOOL_ABORTED, validateJsonSchemaValue } from '@deepseek-ai/dsh-tools'
+import type { JsonSchemaNode, PreToolDecision, ToolExecution, ToolRunContext } from '@deepseek-ai/dsh-tools'
 import { HarnessError, createUserMessage } from '@deepseek-ai/dsh-llm'
 import { assertActionRequest, assertClickAddressing } from '../computer/index.ts'
 import type {
@@ -88,6 +88,81 @@ interface SelectTextToolArgs {
 }
 interface DragToolArgs { app: string; from_x: number; from_y: number; to_x: number; to_y: number }
 interface SecondaryActionToolArgs { app: string; element_index: number; action: string }
+
+/** Input tools whose arguments must be valid before an approval prompt is shown. */
+const INPUT_TOOL_NAMES = new Set([
+  'computer_use_click',
+  'computer_use_type_text',
+  'computer_use_press_key',
+  'computer_use_scroll',
+  'computer_use_set_value',
+  'computer_use_select_text',
+  'computer_use_drag',
+  'computer_use_perform_secondary_action',
+])
+
+/** Convert one preflight failure into the stable model-facing error text. */
+function preflightErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+  if (!message.startsWith('computer: ')) return message
+  // The seam uses camelCase for internal request objects; the model-facing
+  // contract uses snake_case tool arguments.
+  return `computer_use: ${message.slice('computer: '.length).replaceAll('elementIndex', 'element_index')}`
+}
+
+/**
+ * Validate one input call before the policy waterfall can ask for approval.
+ * The registry's normal `defineTool` validation happens in the tool body, which
+ * is too late for app-level approval. Reuse each definition's compiled schema
+ * for field/type checks, then apply the cross-field and semantic checks that
+ * the parameter schema cannot express.
+ */
+function preflightInputTool(ctx: Context, exec: ToolExecution): string | undefined {
+  if (!INPUT_TOOL_NAMES.has(exec.name)) return undefined
+  const definition = ctx.tools.get(exec.name)
+  if (definition === undefined) return undefined
+
+  const schemaViolations = validateJsonSchemaValue(
+    definition.parameters as JsonSchemaNode,
+    exec.arguments,
+  )
+  if (schemaViolations.length > 0) return `invalid arguments: ${schemaViolations.join('; ')}`
+
+  try {
+    switch (exec.name) {
+      case 'computer_use_click':
+        validateClick(exec.arguments as ClickToolArgs)
+        break
+      case 'computer_use_type_text':
+        validateTypeText(exec.arguments as TypeTextToolArgs)
+        break
+      case 'computer_use_press_key':
+        validatePressKey(exec.arguments as PressKeyToolArgs)
+        break
+      case 'computer_use_scroll':
+        validateScroll(exec.arguments as ScrollToolArgs)
+        break
+      case 'computer_use_set_value':
+        validateSetValue(exec.arguments as SetValueToolArgs)
+        break
+      case 'computer_use_select_text':
+        validateSelectText(exec.arguments as SelectTextToolArgs)
+        break
+      case 'computer_use_drag':
+        validateDrag(exec.arguments as DragToolArgs)
+        break
+      case 'computer_use_perform_secondary_action':
+        validateSecondary(exec.arguments as SecondaryActionToolArgs)
+        break
+      /* v8 ignore next -- INPUT_TOOL_NAMES and this switch intentionally mirror one another. */
+      default:
+        return undefined
+    }
+  } catch (error: unknown) {
+    return preflightErrorMessage(error)
+  }
+  return undefined
+}
 
 function validateApp(app: string): void {
   if (app.trim().length === 0) throw new Error('computer_use: app must be a non-empty string')
@@ -461,6 +536,16 @@ This policy governs Computer Use actions only: clicks, typing, scrolling, draggi
 export function apply(ctx: Context, config: Config = {}): void {
   /* v8 ignore next -- the Config schema defaults enableScreenshots before apply, so the fallback guards a hand-built config only. */
   const enableScreenshots = config.enableScreenshots ?? true
+
+  // Reject malformed input before the approval policy runs. `defineTool` also
+  // validates arguments, but its wrapper executes after `tools/pre-execute`; a
+  // preflight here prevents an invalid call from opening an approval prompt.
+  ctx.on('tools/pre-execute', (exec: ToolExecution, next: () => Promise<PreToolDecision>): Promise<PreToolDecision> => {
+    const violation = preflightInputTool(ctx, exec)
+    return violation === undefined
+      ? next()
+      : Promise.resolve({ kind: 'deny', reason: violation })
+  }, { prepend: true })
 
   // Cross-call guidance belongs in the prompt rather than one-call schema prose.
   ctx.systemPrompt.section({

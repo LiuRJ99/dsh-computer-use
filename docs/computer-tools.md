@@ -16,7 +16,7 @@ Model-facing Consumer of the `ctx.computer` seam: the ten `computer_use_*` tools
 | `computer_use_set_value` / `computer_use_select_text` | Replace an editable value directly; locate text and select or place the cursor. |
 | `computer_use_drag` / `computer_use_perform_secondary_action` | Drag between coordinates; invoke a named accessibility action. |
 
-The tool executes the cross-field rules the schema cannot express: a click addresses exactly one mode, counts and pages are positive, and app/text/key/action inputs are non-empty (`set_value` may clear a field). The tool converts a caller abort into the registry's `tool call aborted` error.
+The tool executes the cross-field rules the schema cannot express: a click addresses exactly one mode, counts and pages are positive, and app/text/key/action inputs are non-empty (`set_value` may clear a field). These input checks run before the separate computer-policy approval gate, so malformed calls do not trigger an approval prompt. The tool converts a caller abort into the registry's `tool call aborted` error.
 
 ## Screenshot flow
 
@@ -98,7 +98,7 @@ Append-only.
 
 #### What the model sees
 
-Validation and policy failures are normalized as `Error: <message>`. This package's stable messages are `computer_use: app must be a non-empty string`, `computer_use: click requires exactly one addressing mode: elementIndex, or both x and y`, `computer_use: click coordinates require both x and y`, `computer_use: click_count must be a positive integer, got <value>`, `computer_use: text must be a non-empty string`, `computer_use: key must be a non-empty string`, `computer_use: action must be a non-empty string`, and `tool call aborted`.
+Validation and policy failures are normalized as `Error: <message>`. This package's stable messages are `computer_use: app must be a non-empty string`, `computer_use: click requires exactly one addressing mode: element_index, or both x and y`, `computer_use: click coordinates require both x and y`, `computer_use: click_count must be a positive integer, got <value>`, `computer_use: text must be a non-empty string`, `computer_use: key must be a non-empty string`, `computer_use: action must be a non-empty string`, and `tool call aborted`.
 
 #### Token effect
 
