@@ -8,6 +8,33 @@ The design is accessibility-tree-first: `computer_use_get_app_state` returns a n
 
 Everything ships in this one package: the seam, the local Swift-daemon provider, the `computer_use_*` tools, the approval policy, and a standalone MCP server. The complete feature delta against OpenAI's implementation lives in [docs/codex-parity.md](docs/codex-parity.md); that reference is the parity checklist.
 
+## Fork Enhancements (v0.1.2)
+
+> This repository is a maintained and security-hardened fork (maintained at [`LiuRJ99/dsh-computer-use`](https://github.com/LiuRJ99/dsh-computer-use), version `v0.1.2`). While preserving the SkyLight / Accessibility Tree core capabilities, it enhances argument validation, lazy capability gating, and DSH 0.1.2 host compatibility.
+
+### 1. Installation from this Fork
+
+```sh
+# Recommended: install the verified v0.1.2 Release Tag
+dsh plugin --profile web add "git+https://github.com/LiuRJ99/dsh-computer-use.git#v0.1.2"
+
+# Build the daemon and grant macOS permissions (once per machine)
+npx @zibokapi/dsh-codex-computer-use
+```
+
+### 2. Key Enhancements
+
+* **Pre-Approval Argument Validation**:
+  * Added rigorous validation on arguments (window IDs, coordinate bounds, key symbols) *before* triggering interactive macOS desktop approval prompts;
+  * Malformed or out-of-range tool calls are caught and rejected immediately, preventing unnecessary user approval interruption.
+* **Lazy Gate Collaboration**:
+  * Integrates with `dsh-tool-lazy-gate` to keep high-privilege `computer_use_*` tools and prompt guidance dormant until explicitly invoked via `/computer-use`.
+* **DSH 0.1.2-rc.1 Compatibility & Fork-Safe CI**:
+  * Updated for DSH 0.1.2-rc.1 runtime specifications;
+  * Added fork-safe upstream sync workflows and automated CI pipelines.
+
+---
+
 ## Install
 
 This repository is a DSH bundle: the root `package.json` declares `dsh.bundle.patch` → [`cordis.patch.yml`](cordis.patch.yml), which inserts the three host rows under this package's own subpaths (`@zibokapi/dsh-codex-computer-use/*`). One install brings everything.

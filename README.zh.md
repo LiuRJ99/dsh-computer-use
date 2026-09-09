@@ -8,6 +8,34 @@
 
 全部内容都在这一个包里：接缝、本地 Swift 守护进程提供者、`computer_use_*` 工具、审批策略与独立 MCP 服务器。与 OpenAI 实现之间的完整功能差异见 [docs/codex-parity.md](docs/codex-parity.md)，该参考文档即对齐清单。
 
+## Fork 增强特性（v0.1.2）
+
+> 本仓库为该插件的维护与安全增强分支（维护仓库：[`LiuRJ99/dsh-computer-use`](https://github.com/LiuRJ99/dsh-computer-use)，版本 `v0.1.2`）。在完整保留 SkyLight / Accessibility Tree 核心能力的基础上，增强了参数前置安全校验、会话级按需门控与宿主适配。
+
+### 1. 本 Fork 安装方式
+
+```sh
+# 推荐：安装经过验证的 v0.1.2 Release Tag
+dsh plugin --profile web add "git+https://github.com/LiuRJ99/dsh-computer-use.git#v0.1.2"
+
+# 构建守护进程并授权（每台机器一次）
+npx @zibokapi/dsh-codex-computer-use
+```
+
+### 2. 核心增强特性
+
+* **操作参数前置严格校验（Pre-Approval Validation）**：
+  * 在触发敏感操作的用户人工审批提示之前，先对 `computer_use_*` 工具传入的参数（如应用 PID、坐标范围、按键枚举等）进行合法性预检；
+  * 非法或畸形调用直接在工具执行层拦截并报错，避免无效或恶意的参数触发系统弹窗打扰用户。
+* **Lazy Gate 协同与按需激活**：
+  * 深度联动 `dsh-tool-lazy-gate`：默认隐藏高权限的 `computer_use_*` 工具族，防止模型无意间滥用桌面控制；
+  * 仅当用户在会话中显式调用 `/computer-use` 时才动态激活工具。
+* **DSH 0.1.2-rc.1 宿主适配与安全同步**：
+  * 适配 DSH 0.1.2 宿主契约与生命周期；
+  * 引入防冲突的自动化 upstream 同步工作流与 CI 校验。
+
+---
+
 ## 安装
 
 本仓库是一个 DSH bundle：根 `package.json` 声明 `dsh.bundle.patch` → [`cordis.patch.yml`](cordis.patch.yml)，后者以本包自己的子路径（`@zibokapi/dsh-codex-computer-use/*`）插入三行 host 插件。一次安装带齐全部内容。
