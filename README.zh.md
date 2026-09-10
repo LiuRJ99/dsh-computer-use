@@ -8,15 +8,15 @@
 
 全部内容都在这一个包里：接缝、本地 Swift 守护进程提供者、`computer_use_*` 工具、审批策略与独立 MCP 服务器。与 OpenAI 实现之间的完整功能差异见 [docs/codex-parity.md](docs/codex-parity.md)，该参考文档即对齐清单。
 
-## Fork 增强特性（v0.1.2）
+## Fork 增强特性（v0.1.3）
 
-> 本仓库为该插件的维护与安全增强分支（维护仓库：[`LiuRJ99/dsh-computer-use`](https://github.com/LiuRJ99/dsh-computer-use)，版本 `v0.1.2`）。在完整保留 SkyLight / Accessibility Tree 核心能力的基础上，增强了参数前置安全校验、会话级按需门控与宿主适配。
+> 本仓库为该插件的维护与安全增强分支（维护仓库：[`LiuRJ99/dsh-computer-use`](https://github.com/LiuRJ99/dsh-computer-use)，版本 `v0.1.3`）。在完整保留 SkyLight / Accessibility Tree 核心能力的基础上，增强了参数前置安全校验、会话级按需门控、宿主适配，以及当前 Electron/macOS 窗口的原生截图捕获。
 
 ### 1. 本 Fork 安装方式
 
 ```sh
-# 推荐：安装经过验证的 v0.1.2 Release Tag
-dsh plugin --profile web add "git+https://github.com/LiuRJ99/dsh-computer-use.git#v0.1.2"
+# 推荐：安装经过验证的 v0.1.3 Release Tag
+dsh plugin --profile web add "git+https://github.com/LiuRJ99/dsh-computer-use.git#v0.1.3"
 
 # 构建守护进程并授权（每台机器一次）
 npx @zibokapi/dsh-codex-computer-use
@@ -33,6 +33,10 @@ npx @zibokapi/dsh-codex-computer-use
 * **DSH 0.1.2-rc.1 宿主适配与安全同步**：
   * 适配 DSH 0.1.2 宿主契约与生命周期；
   * 引入防冲突的自动化 upstream 同步工作流与 CI 校验。
+* **原生截图与 Electron AX 回退**：
+  * 当 `AXWindowNumber` 不可用时，回退到 `CGWindowListCopyWindowInfo`，按进程和窗口标题选择可见窗口后再调用 ScreenCaptureKit；
+  * 为 Electron/Chromium 启用 `AXManualAccessibility`，使 WorkBuddy 网页内容进入辅助功能树；
+  * 增加受控的 `DSH_COMPUTER_DEBUG=1` 诊断日志与窗口选择回归测试。
 
 ---
 

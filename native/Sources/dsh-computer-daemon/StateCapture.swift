@@ -139,6 +139,71 @@ final class CaptureSession {
         max(0, settleBaseDelay - (now - lastAction))
     }
 
+    /** Whether native screenshot diagnostics are enabled without logging image bytes. */
+    private static var debugEnabled: Bool {
+        let value = ProcessInfo.processInfo.environment["DSH_COMPUTER_DEBUG"]?.lowercased()
+        return value == "1" || value == "true" || value == "yes"
+    }
+
+    /** Emit bounded screenshot diagnostics to stderr when explicitly enabled. */
+    private static func debug(_ message: String) {
+        guard debugEnabled else { return }
+        let line = "[computer-use][screenshot] \(message)\n"
+        FileHandle.standardError.write(Data(line.utf8))
+    }
+
+    /** Emit bounded AX diagnostics to stderr when explicitly enabled. */
+    private static func axDebug(_ message: String) {
+        guard debugEnabled else { return }
+        let line = "[computer-use][ax] \(message)\n"
+        FileHandle.standardError.write(Data(line.utf8))
+    }
+
+    /** Enable Chromium/Electron's richer AX tree without changing other app types. */
+    private static func enableManualAccessibilityIfNeeded(pid: pid_t, canonicalId: String, appElement: AXUIElement) {
+        let executable = NSRunningApplication(processIdentifier: pid)?.executableURL?.path.lowercased() ?? ""
+        let id = canonicalId.lowercased()
+        guard executable.contains("/electron") || executable.contains("/chromium") || id.contains("electron") else { return }
+        let result = AXUIElementSetAttributeValue(appElement, "AXManualAccessibility" as CFString, kCFBooleanTrue)
+        axDebug("app=\(canonicalId) pid=\(pid) AXManualAccessibility=1 result=\(result.rawValue)")
+    }
+
+    /**
+     * Pure CoreGraphics window-list selection, exposed to native tests through
+     * `@testable import`. `AXWindowNumber` is not exposed by current
+     * macOS Electron/Chromium AX windows (and is unsupported for several native
+     * apps as well), while the same visible window is present in the
+     * CoreGraphics window list. Prefer an exact title match.
+     */
+    static func selectCaptureWindowId(infos: [[String: Any]], pid: pid_t, title: String?) -> (id: CGWindowID, candidateCount: Int) {
+        let ownerKey = kCGWindowOwnerPID as String
+        let numberKey = kCGWindowNumber as String
+        let layerKey = kCGWindowLayer as String
+        let nameKey = kCGWindowName as String
+        let candidates = infos.compactMap { info -> (id: CGWindowID, exactTitle: Bool)? in
+            guard let owner = (info[ownerKey] as? NSNumber)?.int32Value, owner == pid,
+                  let layer = (info[layerKey] as? NSNumber)?.intValue, layer == 0,
+                  let number = (info[numberKey] as? NSNumber)?.uint32Value, number != 0
+            else { return nil }
+            let name = info[nameKey] as? String
+            return (CGWindowID(number), title != nil && name == title)
+        }
+        let selected = candidates.first(where: { $0.exactTitle })?.id ?? candidates.first?.id ?? 0
+        return (selected, candidates.count)
+    }
+
+    private static func captureWindowId(window: AXUIElement, pid: pid_t) -> CGWindowID {
+        let axId = axWindowId(window)
+        if axId != 0 { return axId }
+
+        let title = axValue(window, kAXTitleAttribute) as? String
+        let infos = (CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as? [[String: Any]]) ?? []
+        let selection = selectCaptureWindowId(infos: infos, pid: pid, title: title)
+        let titleText = title ?? ""
+        debug("pid=\(pid) axWindowId=\(axId) cgWindowId=\(selection.id) title=\(titleText) candidates=\(selection.candidateCount)")
+        return selection.id
+    }
+
     /**
      * Capture the key window of the given app.
      * @param app - bundle id, display name, or process name.
@@ -155,6 +220,7 @@ final class CaptureSession {
         let pid = try resolveTarget(target)
         let canonicalId = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier ?? target
         let appElement = AXUIElementCreateApplication(pid)
+        Self.enableManualAccessibilityIfNeeded(pid: pid, canonicalId: canonicalId, appElement: appElement)
         guard let window = try preferredWindow(of: appElement, canonicalId: canonicalId, pid: pid) else {
             throw DaemonError.captureFailed("no accessible window for \(app)")
         }
@@ -197,7 +263,7 @@ final class CaptureSession {
         lines.append(contentsOf: selectionNote(pid: pid))
         lines.append(contentsOf: appNotes(canonicalId: canonicalId, window: window))
 
-        let windowId = (axValue(window, "AXWindowNumber") as? CGWindowID) ?? 0
+        let windowId = Self.captureWindowId(window: window, pid: pid)
         lastWindowByApp[canonicalId] = CapturedWindow(element: window, pid: pid, windowId: windowId)
         lastElementsByApp[canonicalId] = elements
         lastPathsByApp[canonicalId] = paths
@@ -220,8 +286,19 @@ final class CaptureSession {
         // The screenshot is confirmation, never the carrier: a failed capture
         // degrades to tree-only state instead of failing the whole call.
         var screenshot: Any = NSNull()
-        if windowId != 0, let shot = try? Screenshot.capture(windowId: windowId) {
-            screenshot = shot
+        if windowId == 0 {
+            Self.debug("app=\(canonicalId) pid=\(pid) status=failed reason=window-id-unavailable")
+        } else {
+            do {
+                let shot = try Screenshot.capture(windowId: windowId)
+                screenshot = shot
+                let bytes = (shot["dataBase64"] as? String).flatMap { Data(base64Encoded: $0)?.count } ?? 0
+                let width = shot["width"] ?? 0
+                let height = shot["height"] ?? 0
+                Self.debug("app=\(canonicalId) windowId=\(windowId) bytes=\(bytes) width=\(width) height=\(height) status=success")
+            } catch {
+                Self.debug("app=\(canonicalId) windowId=\(windowId) status=failed reason=\(error.localizedDescription)")
+            }
         }
         return ["app": canonicalId, "text": resultText, "screenshot": screenshot]
     }

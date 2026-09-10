@@ -93,4 +93,23 @@ final class StateCaptureTests: XCTestCase {
         XCTAssertEqual(CaptureSession.settleBaseRemaining(now: 9.2, lastAction: 9.0), 0.8, accuracy: 0.0001)
         XCTAssertEqual(CaptureSession.settleBaseRemaining(now: 11.0, lastAction: 9.0), 0)
     }
+
+    func testCaptureWindowIdFallsBackToCoreGraphicsAndPrefersExactTitle() {
+        let owner = kCGWindowOwnerPID as String
+        let number = kCGWindowNumber as String
+        let layer = kCGWindowLayer as String
+        let name = kCGWindowName as String
+        let infos: [[String: Any]] = [
+            [owner: NSNumber(value: 4242), number: NSNumber(value: 11), layer: NSNumber(value: 0), name: "Other"],
+            [owner: NSNumber(value: 4242), number: NSNumber(value: 88), layer: NSNumber(value: 0), name: "WorkBuddy"],
+            [owner: NSNumber(value: 4242), number: NSNumber(value: 77), layer: NSNumber(value: 1), name: "Overlay"],
+            [owner: NSNumber(value: 7), number: NSNumber(value: 99), layer: NSNumber(value: 0), name: "WorkBuddy"],
+        ]
+        let selected = CaptureSession.selectCaptureWindowId(infos: infos, pid: 4242, title: "WorkBuddy")
+        XCTAssertEqual(selected.id, 88)
+        XCTAssertEqual(selected.candidateCount, 2)
+        let fallback = CaptureSession.selectCaptureWindowId(infos: infos, pid: 4242, title: nil)
+        XCTAssertEqual(fallback.id, 11)
+        XCTAssertEqual(fallback.candidateCount, 2)
+    }
 }
