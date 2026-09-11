@@ -1,7 +1,7 @@
 {
   "name": "@zibokapi/dsh-codex-computer-use",
   "description": "Desktop computer use for DeepSeek Harness (DSH): macOS app listing, accessibility-tree window capture, screenshots, and synthesized input — the seam, the local Swift-daemon provider, the computer_use_* tools, the approval policy, and a standalone MCP server in one installable plugin package",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publishConfig": {
     "access": "public"
   },
@@ -102,16 +102,16 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
-    "@deepseek-ai/dsh-attachment": "0.1.2-rc.1",
-    "@deepseek-ai/dsh-invariants": "0.1.2-rc.1",
-    "@deepseek-ai/dsh-llm": "0.1.2-rc.1",
-    "@deepseek-ai/dsh-settings": "0.1.2-rc.1",
-    "@deepseek-ai/dsh-skill": "0.1.2-rc.1",
-    "@deepseek-ai/dsh-subprocess": "0.1.2-rc.1",
-    "@deepseek-ai/dsh-subprocess-local": "0.1.2-rc.1",
-    "@deepseek-ai/dsh-system-prompt": "0.1.2-rc.1",
-    "@deepseek-ai/dsh-timeout": "0.1.2-rc.1",
-    "@deepseek-ai/dsh-tools": "0.1.2-rc.1"
+    "@deepseek-ai/dsh-attachment": ">=0.1.2-rc.1 <0.2.0",
+    "@deepseek-ai/dsh-invariants": ">=0.1.2-rc.1 <0.2.0",
+    "@deepseek-ai/dsh-llm": ">=0.1.2-rc.1 <0.2.0",
+    "@deepseek-ai/dsh-settings": ">=0.1.2-rc.1 <0.2.0",
+    "@deepseek-ai/dsh-skill": ">=0.1.2-rc.1 <0.2.0",
+    "@deepseek-ai/dsh-subprocess": ">=0.1.2-rc.1 <0.2.0",
+    "@deepseek-ai/dsh-subprocess-local": ">=0.1.2-rc.1 <0.2.0",
+    "@deepseek-ai/dsh-system-prompt": ">=0.1.2-rc.1 <0.2.0",
+    "@deepseek-ai/dsh-timeout": ">=0.1.2-rc.1 <0.2.0",
+    "@deepseek-ai/dsh-tools": ">=0.1.2-rc.1 <0.2.0"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.2",

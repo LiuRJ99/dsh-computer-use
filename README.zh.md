@@ -8,15 +8,15 @@
 
 全部内容都在这一个包里：接缝、本地 Swift 守护进程提供者、`computer_use_*` 工具、审批策略与独立 MCP 服务器。与 OpenAI 实现之间的完整功能差异见 [docs/codex-parity.md](docs/codex-parity.md)，该参考文档即对齐清单。
 
-## Fork 增强特性（v0.1.3）
+## Fork 增强特性（v0.1.4）
 
-> 本仓库为该插件的维护与安全增强分支（维护仓库：[`LiuRJ99/dsh-computer-use`](https://github.com/LiuRJ99/dsh-computer-use)，版本 `v0.1.3`）。在完整保留 SkyLight / Accessibility Tree 核心能力的基础上，增强了参数前置安全校验、会话级按需门控、宿主适配，以及当前 Electron/macOS 窗口的原生截图捕获。
+> 本仓库为该插件的维护与安全增强分支（维护仓库：[`LiuRJ99/dsh-computer-use`](https://github.com/LiuRJ99/dsh-computer-use)，版本 `v0.1.4`）。在完整保留 SkyLight / Accessibility Tree 核心能力的基础上，增强了参数前置安全校验、会话级按需门控、宿主适配，以及当前 Electron/macOS 窗口的原生截图捕获。
 
 ### 1. 本 Fork 安装方式
 
 ```sh
-# 推荐：安装经过验证的 v0.1.3 Release Tag
-dsh plugin --profile web add "git+https://github.com/LiuRJ99/dsh-computer-use.git#v0.1.3"
+# 推荐：安装经过验证的 v0.1.4 Release Tag
+dsh plugin --profile web add "git+https://github.com/LiuRJ99/dsh-computer-use.git#v0.1.4"
 
 # 构建守护进程并授权（每台机器一次）
 npx @zibokapi/dsh-codex-computer-use

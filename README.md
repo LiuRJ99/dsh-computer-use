@@ -8,15 +8,15 @@ The design is accessibility-tree-first: `computer_use_get_app_state` returns a n
 
 Everything ships in this one package: the seam, the local Swift-daemon provider, the `computer_use_*` tools, the approval policy, and a standalone MCP server. The complete feature delta against OpenAI's implementation lives in [docs/codex-parity.md](docs/codex-parity.md); that reference is the parity checklist.
 
-## Fork Enhancements (v0.1.3)
+## Fork Enhancements (v0.1.4)
 
-> This repository is a maintained and security-hardened fork (maintained at [`LiuRJ99/dsh-computer-use`](https://github.com/LiuRJ99/dsh-computer-use), version `v0.1.3`). While preserving the SkyLight / Accessibility Tree core capabilities, it enhances argument validation, lazy capability gating, DSH 0.1.2 host compatibility, and native screenshot capture on current Electron/macOS windows.
+> This repository is a maintained and security-hardened fork (maintained at [`LiuRJ99/dsh-computer-use`](https://github.com/LiuRJ99/dsh-computer-use), version `v0.1.4`). While preserving the SkyLight / Accessibility Tree core capabilities, it enhances argument validation, lazy capability gating, DSH host compatibility, and native screenshot capture on current Electron/macOS windows.
 
 ### 1. Installation from this Fork
 
 ```sh
-# Recommended: install the verified v0.1.3 Release Tag
-dsh plugin --profile web add "git+https://github.com/LiuRJ99/dsh-computer-use.git#v0.1.3"
+# Recommended: install the verified v0.1.4 Release Tag
+dsh plugin --profile web add "git+https://github.com/LiuRJ99/dsh-computer-use.git#v0.1.4"
 
 # Build the daemon and grant macOS permissions (once per machine)
 npx @zibokapi/dsh-codex-computer-use
