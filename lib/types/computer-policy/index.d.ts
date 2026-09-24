@@ -25,6 +25,8 @@ export interface Config {
      * form the settings section's base, so a user grant layers above them.
      */
     allowlistApps?: string[];
+    /** Apps the user has approved persistently through the live settings form. */
+    approvedApps?: string[];
     /** Whole tool names that always ask, even for approved apps. */
     alwaysConfirmTools?: string[];
     /** Secondary-action labels that always ask, even for approved apps (case-insensitive prefixes). */
@@ -38,6 +40,20 @@ export interface Config {
     sendApprovalApps?: string[];
 }
 /** Runtime configuration schema for the policy plugin. */
-export declare const Config: z<Config>;
-export declare function apply(ctx: Context, config?: Config): void;
+export declare const Config: z<NoInfer<Schemastery.ObjectS<NoInfer<{
+    allowlistApps: z<string[], string[], "defined">;
+    approvedApps: z<string[], string[], "defined">;
+    alwaysConfirmTools: z<string[], string[], "defined">;
+    destructiveLabels: z<string[], string[], "defined">;
+    sendApprovalApps: z<string[], string[], "defined">;
+}>>>, NoInfer<Schemastery.ObjectT<NoInfer<{
+    allowlistApps: z<string[], string[], "defined">;
+    approvedApps: z<string[], string[], "defined">;
+    alwaysConfirmTools: z<string[], string[], "defined">;
+    destructiveLabels: z<string[], string[], "defined">;
+    sendApprovalApps: z<string[], string[], "defined">;
+}>>>, "volatile">;
+export declare function apply(ctx: Context, config?: Config | {
+    get(): Config;
+}): void;
 //# sourceMappingURL=index.d.ts.map

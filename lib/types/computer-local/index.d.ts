@@ -159,7 +159,33 @@ export declare function decodePermissionStatus(value: unknown): ComputerPermissi
  */
 export declare class LocalComputerEngine extends ComputerEngine {
     static inject: string[];
-    static Config: z<Config>;
+    static Config: z<NoInfer<Schemastery.ObjectS<NoInfer<{
+        helperPath: z<string, string, "plain">;
+        helperArgs: z<string[], string[], "defined">;
+        timeoutMs: z<number, number, "defined">;
+        maxTimeoutMs: z<number, number, "defined">;
+        maxTreeBytes: z<number, number, "defined">;
+        maxScreenshotBytes: z<number, number, "defined">;
+        graceMs: z<number, number, "defined">;
+        foregroundApps: z<string[], string[], "defined">;
+        browserIsolation: z<boolean, boolean, "defined">;
+        browserUrlAllow: z<string[], string[], "defined">;
+        browserUrlDeny: z<string[], string[], "defined">;
+        deniedApps: z<string[], string[], "defined">;
+    }>>>, NoInfer<Schemastery.ObjectT<NoInfer<{
+        helperPath: z<string, string, "plain">;
+        helperArgs: z<string[], string[], "defined">;
+        timeoutMs: z<number, number, "defined">;
+        maxTimeoutMs: z<number, number, "defined">;
+        maxTreeBytes: z<number, number, "defined">;
+        maxScreenshotBytes: z<number, number, "defined">;
+        graceMs: z<number, number, "defined">;
+        foregroundApps: z<string[], string[], "defined">;
+        browserIsolation: z<boolean, boolean, "defined">;
+        browserUrlAllow: z<string[], string[], "defined">;
+        browserUrlDeny: z<string[], string[], "defined">;
+        deniedApps: z<string[], string[], "defined">;
+    }>>>, "volatile">;
     /** The currently authoritative config: the settings section, or the composition entry. */
     private source;
     /** The resident connection, present once the daemon has been started. */
@@ -168,7 +194,9 @@ export declare class LocalComputerEngine extends ComputerEngine {
     private nextId;
     /** Validated config (schemastery applied the defaults before construction). */
     get config(): ResolvedConfig;
-    constructor(ctx: Context, config: Config);
+    constructor(ctx: Context, config: Config | {
+        get(): Config;
+    });
     /**
      * Load-time TCC preflight: spawn the daemon (whose startup `requestPermissions()`
      * prompts for each missing grant) and refuse to activate until both grants
@@ -183,7 +211,6 @@ export declare class LocalComputerEngine extends ComputerEngine {
     /** The current daemon argv from the resolved path and extra args. */
     private daemonArgv;
     /** Process id of the resident daemon (spawned during the load-time preflight). */
-    get pid(): number | undefined;
     /**
      * The live connection, starting the daemon when none is running. Starting
      * is synchronous until the spawn returns, so concurrent callers share one
