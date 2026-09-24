@@ -20,6 +20,7 @@ import { existsSync } from 'node:fs'
 import { Context, Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { COMPUTER_SETTINGS_NAMESPACE, ComputerEngine, normalizeDirection, normalizeMouseButton, truncateTreeChars, truncateTreeText } from '../computer/index.ts'
+import type {} from '@deepseek-ai/dsh-settings'
 import type {
   ClickRequest,
   ComputerApp,
@@ -346,11 +347,6 @@ class DaemonConnection {
     return this.aliveFlag
   }
 
-  /** Process id of the daemon tree root (-1 when the spawn failed). */
-  get pid(): number {
-    return this.handle.pid
-  }
-
   /** The retained daemon stderr tail for crash diagnostics. */
   private stderrDiagnostic(): string {
     /* v8 ignore next -- the reader is always present: this connection requested the collect disposition. */
@@ -455,20 +451,20 @@ class DaemonConnection {
 export class LocalComputerEngine extends ComputerEngine {
   static inject = ['subprocess']
 
-  static Config: z<Config> = z.object({
+  static Config = z.object({
     helperPath: z.string(),
     helperArgs: z.array(z.string()).default([]),
-    timeoutMs: z.number().default(DEFAULT_TIMEOUT_MS),
-    maxTimeoutMs: z.number().default(DEFAULT_MAX_TIMEOUT_MS),
-    maxTreeBytes: z.number().default(DEFAULT_MAX_TREE_BYTES),
-    maxScreenshotBytes: z.number().default(DEFAULT_MAX_SCREENSHOT_BYTES),
-    graceMs: z.number().default(DEFAULT_GRACE_MS),
+    timeoutMs: z.number().min(1).default(DEFAULT_TIMEOUT_MS),
+    maxTimeoutMs: z.number().min(1).default(DEFAULT_MAX_TIMEOUT_MS),
+    maxTreeBytes: z.number().min(1).default(DEFAULT_MAX_TREE_BYTES),
+    maxScreenshotBytes: z.number().min(1).default(DEFAULT_MAX_SCREENSHOT_BYTES),
+    graceMs: z.number().min(1).max(MAX_TIMER_DELAY_MS).default(DEFAULT_GRACE_MS),
     foregroundApps: z.array(z.string()).default([]),
     browserIsolation: z.boolean().default(false),
     browserUrlAllow: z.array(z.string()).default([]),
     browserUrlDeny: z.array(z.string()).default([]),
     deniedApps: z.array(z.string()).default([]),
-  })
+  }).volatile()
 
   /** The currently authoritative config: the settings section, or the composition entry. */
   private source: () => ResolvedConfig
@@ -484,7 +480,7 @@ export class LocalComputerEngine extends ComputerEngine {
     return this.source()
   }
 
-  constructor(ctx: Context, config: Config) {
+  constructor(ctx: Context, config: Config | { get(): Config }) {
     super(ctx)
     /* v8 ignore start -- platform gate: this package loads only on macOS; non-darwin hosts reject it here. */
     if (process.platform !== 'darwin') {
@@ -492,24 +488,19 @@ export class LocalComputerEngine extends ComputerEngine {
     }
     /* v8 ignore stop */
     // Schemastery fills these fields before construction; the type does not encode that step.
-    const entry = config as ResolvedConfig
+    const readEntry = (): ResolvedConfig => ('get' in config ? config.get() : config) as ResolvedConfig
+    const entry = readEntry()
     assertServiceableComputerConfig(entry)
-    this.source = () => entry
-    // Keep the settings integration optional: the engine still runs from its
-    // composition entry when no settings provider is mounted. The injection
-    // fiber also gives installSection a lifecycle tied to the provider, so a
-    // provider detach correctly restores the composition source.
-    ctx.inject(['settings'], (scope) => {
-      scope.settings.installSection(ctx, COMPUTER_SETTINGS_NAMESPACE, LocalComputerEngine.Config, entry, {
-        validate: assertServiceableComputerConfig,
-        setSource: (current) => {
-          this.source = current as () => ResolvedConfig
-        },
-        // Every field is read through the getter at each request, so nothing
-        // derived from the source needs rebuilding when the document changes.
-        onChange: () => {},
-      })
-    })
+    // The current Host projects volatile Loader Config fields into settings
+    // forms. Read the live entry on demand so edits take effect immediately.
+    this.source = () => {
+      const value = ctx.get('settings')?.describe().find(
+        row => row.ns === COMPUTER_SETTINGS_NAMESPACE,
+      )?.value
+      const current = { ...readEntry(), ...(value && typeof value === 'object' ? value : {}) } as ResolvedConfig
+      assertServiceableComputerConfig(current)
+      return current
+    }
     // Fail loud at load when no composition value, no environment value, and
     // no setup-CLI install name a daemon; a settings-document value present at
     // load also resolves here through the source getter.
@@ -586,10 +577,6 @@ export class LocalComputerEngine extends ComputerEngine {
   }
 
   /** Process id of the resident daemon (spawned during the load-time preflight). */
-  get pid(): number | undefined {
-    return this.connection?.pid
-  }
-
   /**
    * The live connection, starting the daemon when none is running. Starting
    * is synchronous until the spawn returns, so concurrent callers share one

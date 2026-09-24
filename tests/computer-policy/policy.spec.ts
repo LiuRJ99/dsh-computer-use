@@ -11,8 +11,7 @@ import { Context } from '@deepseek-ai/cordis'
 import { ToolCallId } from '@deepseek-ai/dsh-llm'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
-import { SettingsProvider } from '@deepseek-ai/dsh-settings'
-import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
+import type {} from '@deepseek-ai/dsh-settings'
 import { ComputerEngine } from '../../src/computer/index.ts'
 import type {
   ClickRequest,
@@ -59,21 +58,16 @@ class MockEngine extends ComputerEngine {
   async recordStop(): Promise<ComputerRecordStatus> { return { recording: false, maxDurationSec: 1800 } }
 }
 
-/** The smallest real settings provider: one in-memory document. */
-class MemorySettings extends SettingsProvider {
-  doc: Record<string, unknown> = {}
-
-  get writable(): boolean {
-    return true
+/** Focused stand-in for the Host's Loader-derived settings form. */
+class MemorySettings {
+  approvedApps: string[] = []
+  describe() {
+    return [{ ns: COMPUTER_POLICY_NAMESPACE, value: { approvedApps: [...this.approvedApps] } }]
   }
-
-  protected load(): Promise<Record<string, unknown>> {
-    return Promise.resolve(structuredClone(this.doc))
-  }
-
-  protected persist(ns: SettingsNamespace, section: Record<string, unknown>): Promise<void> {
-    this.doc = { ...this.doc, [ns]: structuredClone(section) }
-    return Promise.resolve()
+  async mutate(_ns: string, ops: readonly { op: string; path: readonly string[]; value?: unknown }[]) {
+    for (const op of ops) if (op.op === 'set' && op.path[0] === 'approvedApps') {
+      this.approvedApps = op.value as string[]
+    }
   }
 }
 
@@ -129,7 +123,7 @@ async function setup(options: {
   const ctx = new Context()
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
-  if (options.settings !== false) await ctx.plugin(MemorySettings)
+  if (options.settings !== false) ctx.provide('settings', new MemorySettings() as never)
   if (options.approval !== undefined) ctx.provide('approval', options.approval)
   if (options.questions !== undefined) ctx.provide('userQuestions', options.questions)
   await ctx.plugin(MockEngine)

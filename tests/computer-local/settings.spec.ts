@@ -3,43 +3,38 @@
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import type { Fiber } from '@deepseek-ai/cordis'
-import { SettingsProvider } from '@deepseek-ai/dsh-settings'
-import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
+import type {} from '@deepseek-ai/dsh-settings'
 import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
 import { COMPUTER_SETTINGS_NAMESPACE } from '../../src/computer/index.ts'
-import { LocalComputerEngine } from '../../src/computer-local/index.ts'
+import { LocalComputerEngine, assertServiceableComputerConfig } from '../../src/computer-local/index.ts'
 
 const fixturePath = fileURLToPath(new URL('./fixtures/fake-daemon.mjs', import.meta.url))
 
-/** The smallest real provider: one in-memory document, always writable. */
-class MemorySettings extends SettingsProvider {
-  doc: Record<string, unknown> = {}
-
-  get writable(): boolean {
-    return true
+/** Focused stand-in for the Host's Loader-derived settings form. */
+class MemorySettings {
+  constructor(public value: Record<string, unknown>) {}
+  describe() {
+    return [{ ns: COMPUTER_SETTINGS_NAMESPACE, value: structuredClone(this.value) }]
   }
-
-  protected load(): Promise<Record<string, unknown>> {
-    return Promise.resolve(structuredClone(this.doc))
-  }
-
-  protected persist(ns: SettingsNamespace, section: Record<string, unknown>): Promise<void> {
-    this.doc = { ...this.doc, [ns]: structuredClone(section) }
-    return Promise.resolve()
+  async update(_ns: string, patch: object) {
+    const next = { ...this.value, ...patch }
+    assertServiceableComputerConfig(next)
+    this.value = next
   }
 }
 
 async function boot(config: ConstructorParameters<typeof LocalComputerEngine>[1] = {}): Promise<{
   ctx: Context
-  settingsFiber: Fiber
-  engineFiber: Fiber
+  settingsFiber: { dispose(): Promise<void> }
+  engineFiber: { dispose(): Promise<void> }
   engine: LocalComputerEngine
 }> {
   const ctx = new Context()
   await ctx.plugin(LocalSubprocessRuntime)
-  const settingsFiber = ctx.plugin(MemorySettings)
-  await settingsFiber.await()
+  const settings = new MemorySettings({ helperPath: process.execPath, helperArgs: [fixturePath], timeoutMs: 60_000,
+    maxTimeoutMs: 120_000, maxTreeBytes: 256_000, maxScreenshotBytes: 2_097_152, graceMs: 3_000, ...config })
+  const release = ctx.provide('settings', settings as never)
+  const settingsFiber = { dispose: async () => { await release() } }
   const engineFiber = ctx.plugin(LocalComputerEngine, {
     helperPath: process.execPath,
     helperArgs: [fixturePath],
@@ -112,13 +107,4 @@ describe('computer settings section', () => {
     await ctx.fiber.dispose()
   })
 
-  it('releases the namespace when the engine unloads', async () => {
-    const bench = await boot()
-    expect(bench.ctx.settings.describe().map(row => String(row.ns))).toContain('computer')
-
-    await bench.engineFiber.dispose()
-
-    expect(bench.ctx.settings.describe().map(row => String(row.ns))).not.toContain('computer')
-    await bench.ctx.fiber.dispose()
-  })
 })

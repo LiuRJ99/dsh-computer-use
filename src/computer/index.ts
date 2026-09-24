@@ -37,7 +37,7 @@ import type {
  * duplicate service registration), and a settings document carried between
  * machines keeps resolving under the one name.
  */
-export const COMPUTER_SETTINGS_NAMESPACE = 'computer' as const
+export const COMPUTER_SETTINGS_NAMESPACE = 'computer-engine' as const
 
 export type {
   ClickRequest,

@@ -356,7 +356,7 @@ async function captureState(
   if (exec.parent !== undefined) {
     exec.deferContext(createUserMessage({
       content: appStateContent(value),
-      source: { kind: 'plugin', plugin: 'tool-computer' },
+      source: { kind: 'tool', callId: exec.callId },
     }))
   }
   return value
