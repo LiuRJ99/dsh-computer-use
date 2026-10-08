@@ -185,25 +185,22 @@ jobs:
           done
           echo "composed rows referencing this bundle: $(grep -c '@zibokapi/dsh-codex-computer-use/' "$RUNNER_TEMP/dump.txt")"
 
-      # Direct Node imports do not use DSH's Host module resolver. Supply the
-      # declared Host peers explicitly rather than relying on auto-installed peers.
-      - name: Install exact Host peers for standalone module imports
+      # Direct Node imports bypass DSH's Host module resolver. Install the
+      # exact official Host dependency graph for these standalone import checks.
+      - name: Install the exact Host for standalone module imports
         run: |
           export DSH_HOME="$RUNNER_TEMP/dsh-home"
-          node --input-type=module -e '
-            import { readFileSync } from "node:fs"
-            import { execFileSync } from "node:child_process"
-            const manifest = JSON.parse(readFileSync("package.json", "utf8"))
-            const runtimePeers = new Set(["@deepseek-ai/cordis", "@deepseek-ai/dsh-attachment",
-              "@deepseek-ai/dsh-llm", "@deepseek-ai/dsh-timeout", "@deepseek-ai/dsh-tools"])
-            const peers = Object.entries(manifest.peerDependencies)
-              .filter(([name]) => runtimePeers.has(name)).map(([name, version]) =>
-              name + "@" + (name === "@deepseek-ai/cordis" ? "4.0.4" : version))
-            for (const profile of ["ci", "citar", "cigit"]) {
-              execFileSync("pnpm", ["--dir", process.env.DSH_HOME + "/profiles/" + profile,
-                "add", "--save-exact", ...peers], { stdio: "inherit" })
-            }
-          '
+          for profile in ci citar cigit; do
+            cat > "$DSH_HOME/profiles/$profile/pnpm-workspace.yaml" <<'YAML'
+          nodeLinker: hoisted
+          autoInstallPeers: false
+          allowBuilds:
+            '@deepseek-ai/dsh-subprocess-local@0.2.0-rc.2': true
+            'koffi@3.1.1': true
+            'node-pty@1.2.0-beta.15': true
+          YAML
+            pnpm --dir "$DSH_HOME/profiles/$profile" add --save-exact @deepseek-ai/dsh@0.2.0-rc.2
+          done
 
       # Every patch row resolves through the installed package's exports map to
       # a built lib file — exactly what a profile boot does — and each entry
