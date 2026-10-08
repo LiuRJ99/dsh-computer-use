@@ -185,6 +185,23 @@ jobs:
           done
           echo "composed rows referencing this bundle: $(grep -c '@zibokapi/dsh-codex-computer-use/' "$RUNNER_TEMP/dump.txt")"
 
+      # Direct Node imports do not use DSH's Host module resolver. Supply the
+      # declared Host peers explicitly rather than relying on auto-installed peers.
+      - name: Install exact Host peers for standalone module imports
+        run: |
+          export DSH_HOME="$RUNNER_TEMP/dsh-home"
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs"
+            import { execFileSync } from "node:child_process"
+            const manifest = JSON.parse(readFileSync("package.json", "utf8"))
+            const peers = Object.entries(manifest.peerDependencies).map(([name, version]) =>
+              name + "@" + (name === "@deepseek-ai/cordis" ? "4.0.4" : version))
+            for (const profile of ["ci", "citar", "cigit"]) {
+              execFileSync("pnpm", ["--dir", process.env.DSH_HOME + "/profiles/" + profile,
+                "add", "--save-exact", ...peers], { stdio: "inherit" })
+            }
+          '
+
       # Every patch row resolves through the installed package's exports map to
       # a built lib file — exactly what a profile boot does — and each entry
       # module imports cleanly (its bare @deepseek-ai/* imports resolve through
