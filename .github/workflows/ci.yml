@@ -202,7 +202,7 @@ jobs:
             'protobufjs@7.6.6': true
           YAML
             # dsh-tools imports its sandbox peer even when no sandbox provider is mounted.
-            pnpm --dir "$DSH_HOME/profiles/$profile" add --save-exact @deepseek-ai/dsh@0.2.0-rc.2 @deepseek-ai/dsh-sandbox@0.2.0-rc.2
+            pnpm --dir "$DSH_HOME/profiles/$profile" add --save-exact @deepseek-ai/dsh@0.2.0-rc.2 @deepseek-ai/dsh-sandbox@0.2.0-rc.2 @deepseek-ai/dsh-attachment@0.2.0-rc.2
           done
 
       # Every patch row resolves through the installed package's exports map to
