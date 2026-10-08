@@ -8,6 +8,12 @@
 
 全部内容都在这一个包里：接缝、本地 Swift 守护进程提供者、`computer_use_*` 工具、审批策略与独立 MCP 服务器。与 OpenAI 实现之间的完整功能差异见 [docs/codex-parity.md](docs/codex-parity.md)，该参考文档即对齐清单。
 
+## DSH 0.2.0-rc.2 候选适配
+
+当前源码版本：`0.1.6-dev.1`。DSH 兼容声明精确固定到 `0.2.0-rc.2`，未验证 `0.2.1-alpha.1`。以下旧 release/tag 示例保留为历史说明；本轮验证请使用 [插件目录的固定提交和本地验证说明](https://github.com/LiuRJ99/awesome-dsh-plugins/blob/main/docs/dsh-0.2.0-rc.2.zh-CN.md)，不要安装旧 tag 或裸 npm 包名。
+
+Linux 上 153 项 Node 测试、类型检查和 JS/声明构建通过。模拟 daemon 测试使用 macOS 平台夹具，生产 macOS 检查保留，并测试了非 macOS 拒绝加载。Swift、权限和真实桌面操作需在 macOS 验证。
+
 ## Fork 增强特性（v0.1.4）
 
 > 本仓库为该插件的维护与安全增强分支（维护仓库：[`LiuRJ99/dsh-computer-use`](https://github.com/LiuRJ99/dsh-computer-use)，版本 `v0.1.4`）。在完整保留 SkyLight / Accessibility Tree 核心能力的基础上，增强了参数前置安全校验、会话级按需门控、宿主适配，以及当前 Electron/macOS 窗口的原生截图捕获。

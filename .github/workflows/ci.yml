@@ -8,9 +8,8 @@ on:
 jobs:
   # Static validation on Linux against PUBLISHED harness packages, with no
   # harness checkout: this is the path a user takes with `dsh plugin add`.
-  # Typecheck covers src and tests; the runtime tests cannot run here — the
-  # computer-local engine boots only on macOS (it throws a platform gate on
-  # construction), so they run in the native job below.
+  # Fake-daemon suites use a scoped macOS fixture on Linux; production
+  # non-macOS rejection remains covered by an explicit regression test.
   check:
     runs-on: ubuntu-latest
     steps:
@@ -19,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
 
       # No `version:` here — the action reads packageManager from
       # package.json; specifying both is an error ("Multiple versions").
@@ -32,13 +31,16 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
+      - name: Test fake-daemon and platform contracts
+        run: pnpm test
+
       - name: Build
         run: pnpm run build
 
   # The macOS side: the resident Swift helper daemon plus the Node test suite.
   # The engine is macOS-only by design (it throws on non-darwin hosts), so the
-  # tests that boot it — the executor, settings, and integration stacks over
-  # the fake daemon — only make sense here. Bundling/signing into the .app is
+  # fake-daemon tests also run on Linux; Swift and native setup run here.
+  # Bundling/signing into the .app is
   # a release step (`pnpm run build:native`) done on a signed host.
   native:
     runs-on: macos-14
@@ -48,7 +50,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
 
       # No `version:` here — the action reads packageManager from
       # package.json; specifying both is an error ("Multiple versions").
@@ -95,7 +97,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
 
       # No `version:` here — the action reads packageManager from
       # package.json; specifying both is an error ("Multiple versions").
@@ -109,7 +111,7 @@ jobs:
         run: pnpm run build
 
       - name: Install the dsh CLI
-        run: npm install -g @deepseek-ai/dsh@0.1.0-rc.6
+        run: npm install -g @deepseek-ai/dsh@0.2.0-rc.2
 
       - name: Add the bundle from the checkout path
         run: |

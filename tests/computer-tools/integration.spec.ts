@@ -19,6 +19,9 @@ import ToolRuntime from '@deepseek-ai/dsh-tools'
 import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
 import { LocalComputerEngine } from '../../src/computer-local/index.ts'
 import * as ToolComputer from '../../src/computer-tools/index.ts'
+import { useMacOSFakeDaemon } from '../fake-daemon-platform.ts'
+
+useMacOSFakeDaemon()
 
 const fixturePath = fileURLToPath(new URL('../computer-local/fixtures/fake-daemon.mjs', import.meta.url))
 const tmpRoot = mkdtempSync(join(tmpdir(), 'dsh-computer-tools-stack-'))

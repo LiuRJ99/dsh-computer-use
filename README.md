@@ -8,6 +8,12 @@ The design is accessibility-tree-first: `computer_use_get_app_state` returns a n
 
 Everything ships in this one package: the seam, the local Swift-daemon provider, the `computer_use_*` tools, the approval policy, and a standalone MCP server. The complete feature delta against OpenAI's implementation lives in [docs/codex-parity.md](docs/codex-parity.md); that reference is the parity checklist.
 
+## DSH 0.2.0-rc.2 candidate adaptation
+
+Current source version: `0.1.6-dev.1`. DSH compatibility is pinned to `0.2.0-rc.2`; `0.2.1-alpha.1` has not been tested. Older release/tag examples below are historical. For this validation round, use the [catalog's pinned commits and local validation guide](https://github.com/LiuRJ99/awesome-dsh-plugins/blob/main/docs/dsh-0.2.0-rc.2.zh-CN.md) rather than an older tag or an unqualified npm name.
+
+153 Node tests, type checks and the JavaScript/declaration build passed on Linux. Fake-daemon suites simulate macOS; the production macOS guard remains enabled and has a non-macOS rejection test. Swift builds, permissions and live desktop operations require macOS validation.
+
 ## Fork Enhancements (v0.1.4)
 
 > This repository is a maintained and security-hardened fork (maintained at [`LiuRJ99/dsh-computer-use`](https://github.com/LiuRJ99/dsh-computer-use), version `v0.1.4`). While preserving the SkyLight / Accessibility Tree core capabilities, it enhances argument validation, lazy capability gating, DSH host compatibility, and native screenshot capture on current Electron/macOS windows.

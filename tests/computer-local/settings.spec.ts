@@ -7,6 +7,9 @@ import type {} from '@deepseek-ai/dsh-settings'
 import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
 import { COMPUTER_SETTINGS_NAMESPACE } from '../../src/computer/index.ts'
 import { LocalComputerEngine, assertServiceableComputerConfig } from '../../src/computer-local/index.ts'
+import { useMacOSFakeDaemon } from '../fake-daemon-platform.ts'
+
+useMacOSFakeDaemon()
 
 const fixturePath = fileURLToPath(new URL('./fixtures/fake-daemon.mjs', import.meta.url))
 

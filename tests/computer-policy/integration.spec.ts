@@ -16,6 +16,9 @@ import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
 import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
 import { LocalComputerEngine } from '../../src/computer-local/index.ts'
+import { useMacOSFakeDaemon } from '../fake-daemon-platform.ts'
+
+useMacOSFakeDaemon()
 import * as ToolComputer from '../../src/computer-tools/index.ts'
 import * as ComputerPolicy from '../../src/computer-policy/index.ts'
 

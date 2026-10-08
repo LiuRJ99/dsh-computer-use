@@ -28,6 +28,9 @@ import type {
 import { TREE_TRUNCATED_MARK } from '../../src/computer/index.ts'
 import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
 import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+import { useMacOSFakeDaemon } from '../fake-daemon-platform.ts'
+
+useMacOSFakeDaemon()
 
 const fixturePath = fileURLToPath(new URL('./fixtures/fake-daemon.mjs', import.meta.url))
 const tmpRoot = mkdtempSync(join(tmpdir(), 'dsh-computer-local-spec-'))
@@ -51,6 +54,15 @@ afterEach(async () => {
 })
 
 describe('LocalComputerEngine construction', () => {
+  it('refuses a non-macOS host even when a fake daemon is available', async () => {
+    Object.defineProperty(process, 'platform', { value: 'linux' })
+    try {
+      await expect(setup()).rejects.toThrow(/supports macOS only/)
+    } finally {
+      Object.defineProperty(process, 'platform', { value: 'darwin' })
+    }
+  })
+
   it('rejects invalid numeric config', async () => {
     await expect(setup({ timeoutMs: Number.NaN })).rejects.toThrow(/timeoutMs/)
     await expect(setup({ maxTimeoutMs: 0 })).rejects.toThrow(/maxTimeoutMs/)
