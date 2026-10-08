@@ -221,7 +221,16 @@ final class CaptureSession {
         let canonicalId = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier ?? target
         let appElement = AXUIElementCreateApplication(pid)
         Self.enableManualAccessibilityIfNeeded(pid: pid, canonicalId: canonicalId, appElement: appElement)
-        guard let window = try preferredWindow(of: appElement, canonicalId: canonicalId, pid: pid) else {
+        var candidateWindow = try preferredWindow(of: appElement, canonicalId: canonicalId, pid: pid)
+        if candidateWindow == nil, dedicatedBrowserPids[target] == pid {
+            // LaunchServices can publish the browser pid before its first AX window exists.
+            for _ in 0..<50 {
+                RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.1))
+                candidateWindow = try preferredWindow(of: appElement, canonicalId: canonicalId, pid: pid)
+                if candidateWindow != nil { break }
+            }
+        }
+        guard let window = candidateWindow else {
             throw DaemonError.captureFailed("no accessible window for \(app)")
         }
         // Browser private windows are refused outright: reading or driving one
@@ -886,7 +895,8 @@ final class CaptureSession {
                 {
                     return candidate.processIdentifier
                 }
-                Thread.sleep(forTimeInterval: 0.1)
+                // Let AppKit process application launch notifications before polling again.
+                RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.1))
             }
             return nil
         }
@@ -907,7 +917,8 @@ final class CaptureSession {
         }
         for _ in 0..<50 {
             if let pid = resolveRunningPid(target) { return pid }
-            Thread.sleep(forTimeInterval: 0.1)
+            // Let AppKit process application launch notifications before polling again.
+            RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.1))
         }
         return nil
     }
@@ -926,7 +937,7 @@ final class CaptureSession {
      */
     private func launchDedicatedBrowser(_ target: String) -> pid_t? {
         let safeName = target.replacingOccurrences(of: "/", with: "_")
-        let profileDir = NSTemporaryDirectory() + "dsh-browser-\(safeName)"
+        let profileDir = NSTemporaryDirectory() + "dsh-browser-\(safeName)-\(UUID().uuidString)"
         try? FileManager.default.createDirectory(atPath: profileDir, withIntermediateDirectories: true)
         let before = Set(allMatchingPids(target))
         let restoreTo = NSWorkspace.shared.frontmostApplication
@@ -949,7 +960,8 @@ final class CaptureSession {
                 FocusStealPreventer.shared.suppress(pid: fresh, restoreTo: restoreTo)
                 return fresh
             }
-            Thread.sleep(forTimeInterval: 0.1)
+            // Let AppKit process application launch notifications before polling again.
+            RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.1))
         }
         return nil
     }
