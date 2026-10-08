@@ -194,7 +194,10 @@ jobs:
             import { readFileSync } from "node:fs"
             import { execFileSync } from "node:child_process"
             const manifest = JSON.parse(readFileSync("package.json", "utf8"))
-            const peers = Object.entries(manifest.peerDependencies).map(([name, version]) =>
+            const runtimePeers = new Set(["@deepseek-ai/cordis", "@deepseek-ai/dsh-attachment",
+              "@deepseek-ai/dsh-llm", "@deepseek-ai/dsh-timeout", "@deepseek-ai/dsh-tools"])
+            const peers = Object.entries(manifest.peerDependencies)
+              .filter(([name]) => runtimePeers.has(name)).map(([name, version]) =>
               name + "@" + (name === "@deepseek-ai/cordis" ? "4.0.4" : version))
             for (const profile of ["ci", "citar", "cigit"]) {
               execFileSync("pnpm", ["--dir", process.env.DSH_HOME + "/profiles/" + profile,
