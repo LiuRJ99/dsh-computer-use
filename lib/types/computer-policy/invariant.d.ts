@@ -6,7 +6,9 @@ import type { Context } from '@deepseek-ai/cordis';
 /** Cordis companion plugin name. */
 export declare const name = "computer-policy-invariant";
 /** Service required before the companion can reserve package ownership. */
-export declare const inject: string[];
+export declare const inject: {
+    optional: string[];
+};
 /**
  * Register this package's invariant companion.
  * @param ctx - Cordis context carrying the invariant service.

@@ -1,3 +1,9 @@
+## 0.1.6-dev.3 — 2026-10-18
+
+Align the SDK with 0.2.1-rc.1 and make legacy invariant companions optional after removal of the Host invariants service. Retain native engine, permission policy and input-tool behavior.
+
+Compatibility is restricted to `0.2.0-rc.2 || 0.2.1-rc.1`; no alpha or later Host is implied.
+
 # Changelog
 
 ## [0.1.6-dev.2] - 2026-10-08

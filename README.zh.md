@@ -8,9 +8,9 @@
 
 全部内容都在这一个包里：接缝、本地 Swift 守护进程提供者、`computer_use_*` 工具、审批策略与独立 MCP 服务器。与 OpenAI 实现之间的完整功能差异见 [docs/codex-parity.md](docs/codex-parity.md)，该参考文档即对齐清单。
 
-## DSH 0.2.0-rc.2 候选适配
+## DSH 版本兼容
 
-当前源码版本：`0.1.6-dev.1`。DSH 兼容声明精确固定到 `0.2.0-rc.2`，未验证 `0.2.1-alpha.1`。以下旧 release/tag 示例保留为历史说明；本轮验证请使用 [插件目录的固定提交和本地验证说明](https://github.com/LiuRJ99/awesome-dsh-plugins/blob/main/docs/dsh-0.2.0-rc.2.zh-CN.md)，不要安装旧 tag 或裸 npm 包名。
+当前源码版本：`0.1.6-dev.3`。Host 兼容范围：`0.2.0-rc.2 || 0.2.1-rc.1`。安装来源以[插件目录](https://github.com/LiuRJ99/awesome-dsh-plugins#plugin-catalog)中的固定 release 为准。
 
 Linux 上 153 项 Node 测试、类型检查和 JS/声明构建通过。模拟 daemon 测试使用 macOS 平台夹具，生产 macOS 检查保留，并测试了非 macOS 拒绝加载。Swift、权限和真实桌面操作需在 macOS 验证。
 
