@@ -10,7 +10,7 @@
 
 ## DSH 版本兼容
 
-当前源码版本：`0.1.6-dev.3`。Host 兼容范围：`0.2.0-rc.2 || 0.2.1-rc.1`。安装来源以[插件目录](https://github.com/LiuRJ99/awesome-dsh-plugins#plugin-catalog)中的固定 release 为准。
+当前源码版本：`0.1.6-dev.4`。Host 兼容范围：`>=0.2.0-rc.2`。安装来源以[插件目录](https://github.com/LiuRJ99/awesome-dsh-plugins#plugin-catalog)中的固定 release 为准。
 
 Linux 上 153 项 Node 测试、类型检查和 JS/声明构建通过。模拟 daemon 测试使用 macOS 平台夹具，生产 macOS 检查保留，并测试了非 macOS 拒绝加载。Swift、权限和真实桌面操作需在 macOS 验证。
 
@@ -165,3 +165,7 @@ pnpm run build     # esbuild → lib/, tsc → lib/types
 ## 许可证
 
 MIT——见 [LICENSE](LICENSE)。
+
+## Host 兼容策略
+
+Host 最低要求为 `>=0.2.0-rc.2`。较新的 DSH 版本默认延续兼容，只有确认存在不兼容时才增加排除范围或调整实现；不按每个 RC 维护白名单。固定的构建 SDK 版本只记录构建输入，不限制 Host 到同一个版本。安装来源仍固定 release/tag；实际验证记录与兼容范围分开，范围覆盖不等于每个未来版本都已经实测。

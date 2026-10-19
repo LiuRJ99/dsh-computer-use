@@ -1,7 +1,7 @@
 {
   "name": "@zibokapi/dsh-codex-computer-use",
-  "description": "Desktop computer use for DeepSeek Harness (DSH): macOS app listing, accessibility-tree window capture, screenshots, and synthesized input \u2014 the seam, the local Swift-daemon provider, the computer_use_* tools, the approval policy, and a standalone MCP server in one installable plugin package",
-  "version": "0.1.6-dev.3",
+  "description": "Desktop computer use for DeepSeek Harness (DSH): macOS app listing, accessibility-tree window capture, screenshots, and synthesized input — the seam, the local Swift-daemon provider, the computer_use_* tools, the approval policy, and a standalone MCP server in one installable plugin package",
+  "version": "0.1.6-dev.4",
   "publishConfig": {
     "access": "public"
   },
@@ -16,7 +16,8 @@
   },
   "homepage": "https://github.com/geohotstan/dsh-computer-use#readme",
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=22.19.0",
+    "dsh": ">=0.2.0-rc.2"
   },
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -77,7 +78,7 @@
       "patch": "./cordis.patch.yml"
     },
     "compatibility": {
-      "dsh": "0.2.0-rc.2 || 0.2.1-rc.1"
+      "dsh": ">=0.2.0-rc.2"
     }
   },
   "files": [
@@ -103,15 +104,15 @@
   "dependencies": {},
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.4",
-    "@deepseek-ai/dsh-attachment": "0.2.0-rc.2 || 0.2.1-rc.1",
-    "@deepseek-ai/dsh-llm": "0.2.0-rc.2 || 0.2.1-rc.1",
-    "@deepseek-ai/dsh-settings": "0.2.0-rc.2 || 0.2.1-rc.1",
-    "@deepseek-ai/dsh-skill": "0.2.0-rc.2 || 0.2.1-rc.1",
-    "@deepseek-ai/dsh-subprocess": "0.2.0-rc.2 || 0.2.1-rc.1",
-    "@deepseek-ai/dsh-subprocess-local": "0.2.0-rc.2 || 0.2.1-rc.1",
-    "@deepseek-ai/dsh-system-prompt": "0.2.0-rc.2 || 0.2.1-rc.1",
-    "@deepseek-ai/dsh-timeout": "0.2.0-rc.2 || 0.2.1-rc.1",
-    "@deepseek-ai/dsh-tools": "0.2.0-rc.2 || 0.2.1-rc.1",
+    "@deepseek-ai/dsh-attachment": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-settings": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-skill": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-subprocess": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-subprocess-local": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-system-prompt": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-timeout": ">=0.2.0-rc.2",
+    "@deepseek-ai/dsh-tools": ">=0.2.0-rc.2",
     "@deepseek-ai/schemastery": "^3.18.4"
   },
   "devDependencies": {
@@ -130,7 +131,8 @@
     "@types/node": "^22.20.0",
     "esbuild": "^0.25.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "semver": "7.8.5"
   },
   "packageManager": "pnpm@11.21.0+sha512.521705bce689924eac72f5a3587122f362689ef6571e55ba80076fd637c11132ecffada26fad4ea79c485bfddbfd3d5a2a5b05805a77e893de71ec8a6cca3bb1"
 }

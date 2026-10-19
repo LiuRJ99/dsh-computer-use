@@ -10,7 +10,7 @@ Everything ships in this one package: the seam, the local Swift-daemon provider,
 
 ## DSH release compatibility
 
-Current source version: `0.1.6-dev.3`. Host compatibility: `0.2.0-rc.2 || 0.2.1-rc.1`. Use the fixed release source in the [plugin catalog](https://github.com/LiuRJ99/awesome-dsh-plugins#plugin-catalog).
+Current source version: `0.1.6-dev.4`. Host compatibility: `>=0.2.0-rc.2`. Use the fixed release source in the [plugin catalog](https://github.com/LiuRJ99/awesome-dsh-plugins#plugin-catalog).
 
 153 Node tests, type checks and the JavaScript/declaration build passed on Linux. Fake-daemon suites simulate macOS; the production macOS guard remains enabled and has a non-macOS rejection test. Swift builds, permissions and live desktop operations require macOS validation.
 
@@ -164,3 +164,7 @@ pnpm run build     # esbuild → lib/, tsc → lib/types
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## Host compatibility policy
+
+The minimum Host requirement is `>=0.2.0-rc.2`. Newer DSH versions remain eligible by default; narrow the range or adapt the implementation only when an incompatibility is confirmed. Do not maintain an allowlist of individual RCs. Fixed build SDK versions describe build inputs, not the allowed Host versions. Installation sources stay pinned to releases/tags. Qualification evidence is recorded separately: an eligible future Host is not automatically a tested Host.
